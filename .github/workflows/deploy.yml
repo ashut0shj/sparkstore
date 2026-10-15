@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0
+        uses: databricks/setup-cli@main
 
       - name: Validate Bundle
         env:
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0
+        uses: databricks/setup-cli@main
 
       - name: Deploy Bundle to Main Target
         env:
@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0
+        uses: databricks/setup-cli@main
 
       - name: Deploy Bundle to Prod Target
         env:
