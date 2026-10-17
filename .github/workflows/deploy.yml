@@ -31,7 +31,6 @@ jobs:
           databricks bundle validate
 
   deploy-dev:
-<<<<<<< Updated upstream
     name: Deploy to Dev (maven_dev)
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -81,38 +80,6 @@ jobs:
           DATABRICKS_AUTH_TYPE: azure-client-secret
         run: |
           databricks repos update /Workspace/Shared/sparkstore --branch main
-=======
-      name: Deploy to Dev (maven_dev)
-      needs: validate
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Code
-          uses: actions/checkout@v4
-
-        - name: Setup Databricks CLI
-          uses: databricks/setup-cli@main
-
-        - name: Deploy Bundle to Main Target
-          env:
-            DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
-            ARM_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
-            ARM_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-            ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-            DATABRICKS_AUTH_TYPE: azure-client-secret
-          run: |
-            databricks bundle deploy --target main
-
-        - name: Update Shared Git Folder
-          env:
-            DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
-            ARM_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
-            ARM_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-            ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-            DATABRICKS_AUTH_TYPE: azure-client-secret
-          run: |
-            databricks repos update /Workspace/Shared/sparkstore --branch main
->>>>>>> Stashed changes
 
   deploy-prod:
     name: Deploy to Prod (maven_prod)
@@ -134,8 +101,4 @@ jobs:
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
         run: |
-<<<<<<< Updated upstream
           databricks bundle deploy --target prod
-=======
-          databricks bundle deploy --target prod
->>>>>>> Stashed changes
