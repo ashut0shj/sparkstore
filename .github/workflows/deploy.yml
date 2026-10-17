@@ -89,7 +89,7 @@ jobs:
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
         run: |
-          databricks jobs run-now --job-id 9693838101789
+          databricks jobs run-now 9693838101789
 
   deploy-prod:
     name: Deploy to Prod (maven_prod)
