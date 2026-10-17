@@ -81,7 +81,7 @@ jobs:
         run: |
           databricks repos update /Workspace/Shared/sparkstore --branch main
 
-      - name: Run Medallion Pipeline Job
+      - name: Trigger Testing Job
         env:
           DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
           ARM_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
@@ -89,7 +89,7 @@ jobs:
           ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
         run: |
-          databricks bundle run medallion_pipeline_job --target main
+          databricks jobs run-now --job-id 9693838101789
 
   deploy-prod:
     name: Deploy to Prod (maven_prod)
