@@ -1,7 +1,7 @@
+# Databricks notebook source
 print("hehe")
 
 try:
-# Databricks notebook source
     dbutils.widgets.text("catalog", "maven_test")
     catalog = dbutils.widgets.get("catalog")
 
