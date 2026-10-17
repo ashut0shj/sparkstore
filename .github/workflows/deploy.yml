@@ -81,6 +81,16 @@ jobs:
         run: |
           databricks repos update /Workspace/Shared/sparkstore --branch main
 
+      - name: Run Medallion Pipeline Job
+        env:
+          DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+          ARM_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          DATABRICKS_AUTH_TYPE: azure-client-secret
+        run: |
+          databricks bundle run medallion_pipeline_job --target main
+
   deploy-prod:
     name: Deploy to Prod (maven_prod)
     needs: validate
