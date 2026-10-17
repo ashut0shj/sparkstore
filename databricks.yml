@@ -44,6 +44,6 @@ resources:
       tasks:
         - task_key: run_ingestion
           notebook_task:
-            notebook_path: .src/01_bronze_ingestion.py
+            notebook_path: src/01_bronze_ingestion.py
             base_parameters:
               catalog: ${var.catalog_name}
