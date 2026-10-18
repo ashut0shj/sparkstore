@@ -3,7 +3,7 @@
 # Owner: Nagasupriya Bandlamudi (ingestion), Khushi Gupta (Gold dim_region / dim_date)
 
 regions:
-  destination: {bronze: bronze.adls_regions, silver: silver.regions_clean, gold_contributes_to: [dim_region]}
+  destination: {bronze: bronze.regions, silver: silver.regions_clean, gold_contributes_to: [dim_region]}
   grain: "one row per region_id"
   business_key: region_id
   columns:
@@ -12,7 +12,7 @@ regions:
     - {name: sales_region, type: string, nullable: false, note: "used for row-level security region filter"}
 
 calendar:
-  destination: {bronze: bronze.adls_calendar, silver: silver.calendar_clean, gold_contributes_to: [dim_date]}
+  destination: {bronze: bronze.calendar, silver: silver.calendar_clean, gold_contributes_to: [dim_date]}
   grain: "one row per calendar date"
   business_key: date
   columns:

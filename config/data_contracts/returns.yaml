@@ -5,7 +5,7 @@
 dataset: returns
 source_system: ADLS_POS
 destination:
-  bronze: bronze.adls_returns
+  bronze: bronze.returns
   silver: silver.returns_clean
   gold_contributes_to: [fact_returns]
 

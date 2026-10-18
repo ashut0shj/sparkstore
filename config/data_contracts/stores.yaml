@@ -5,7 +5,7 @@
 dataset: stores
 source_system: ADLS_OPERATIONAL
 destination:
-  bronze: bronze.adls_stores
+  bronze: bronze.stores
   silver: silver.stores_scd2
   gold_contributes_to: [dim_store]
 

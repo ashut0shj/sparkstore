@@ -1,9 +1,6 @@
 # Data contracts: Kafka streams (online_orders, inventory_restock)
 # Source: Confluent Cloud, produced by a local Python script
 # (scripts/kafka_producer.py), consumed by Databricks Structured Streaming.
-# Owner: Nagasupriya Bandlamudi (ingestion/Bronze), Khushi Gupta
-# (Silver dedup/watermark), Mo Shayan Ul Haque (real-time dashboard consumer)
-
 online_orders:
   topic: online_orders
   destination:
@@ -34,9 +31,9 @@ online_orders:
   anomaly_rate: 0.05
 
 inventory_restock:
-  topic: inventory_restock   # corrected name; repo code previously subscribed to `inventory_events` — confirm with team before relying on this in production
+  topic: inventory_events   # corrected name; repo code previously subscribed to `inventory_events` — confirm with team before relying on this in production
   destination:
-    bronze: bronze.kafka_inventory_restock_raw
+    bronze: bronze.kafka_inventory_raw
     silver: silver.inventory_restock_clean
     gold_contributes_to: [fact_inventory_movement]
   grain: "one row per restock_event_id"
