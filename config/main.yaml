@@ -1,0 +1,29 @@
+# config/main.yaml
+# Overrides for the `main` branch / maven_dev catalog (the shared,
+# CI-deployed demonstration environment). Merged on top of
+# config/common.yaml by src/common/config.py.
+
+env: main
+catalog: maven_dev
+git_branch: main
+
+compute:
+  job_compute_profile: medium       # still small for a capstone; raise only if volume requires it
+  sql_warehouse_size: "X-Small"
+
+data_volume:
+  transactions_rows: 50000
+  max_file_size_mb: 20
+
+streaming:
+  kafka_trigger: availableNow
+  # On evaluation/demo day only: a teammate manually switches the Kafka
+  # consumer job to a continuous trigger for 2-3 minutes to show live
+  # dashboard counters, then switches it back. This is a manual runbook
+  # step (docs/DEMO_AND_VIVA_GUIDE.md), not something CI does automatically,
+  # to avoid accidentally leaving a 24/7 stream running against the
+  # training credit budget.
+  demo_continuous_window_minutes: 3
+
+job_notifications:
+  on_failure_email: []               # configure teammate emails before enabling schedule

@@ -5,9 +5,32 @@ variables:
   catalog_name:
     description: Target Unity Catalog for medallion architecture
     default: maven_test
+  warehouse_id:
+    description: >
+      SQL warehouse ID that AI/BI (Lakeview) dashboards query against
+      (resources/dashboards.yml). This is workspace-specific and cannot
+      be known or fabricated from this sandbox -- a teammate fills it in
+      via `databricks bundle deploy --var="warehouse_id=<id>"` or by
+      setting it in the target's `variables` block once a real
+      serverless/classic SQL warehouse exists in each workspace (see
+      docs/TEAM_STEPS_SHAYAN.md Step 1).
+    default: REPLACE_WITH_REAL_WAREHOUSE_ID
 
+# -----------------------------------------------------------------------
+# Branch/environment strategy (decided with the team 2026-10-18, see
+# the team branch/catalog decision log):
+#   - Exactly two permanent branches: `test` and `main`.
+#   - `test` branch + individual dev workspaces -> maven_test catalog.
+#   - `main` branch (PR + passing CI required) -> maven_dev catalog.
+#   - maven_prod catalog is kept provisioned but is NOT wired to a
+#     permanent git branch; promote to it manually/later if the team
+#     decides a third environment is worth the added CI/CD complexity.
+# This replaces the repo's previous dev/main/prod three-branch mapping.
+# -----------------------------------------------------------------------
 targets:
-  # 1. Individual developer workspace targets
+  # Individual developer workspace (interactive `databricks bundle deploy`
+  # from a laptop) AND the shared `test` branch CI deployment both use
+  # this target. Fast iteration, small/bounded compute.
   dev:
     mode: development
     default: true
@@ -16,34 +39,21 @@ targets:
     variables:
       catalog_name: maven_test
 
-  # 2. Main branch deployment target (CI/CD)
+  # `main` branch deployment target (CI/CD). Requires PR + passing CI per
+  # branch protection rules (see docs/TEAM_STEPS_ASHUTOSH.md). Deploys to
+  # the shared demonstration environment.
   main:
     mode: production
     workspace:
-      root_path: /Shared/.bundle/${bundle.name}/dev
+      root_path: /Shared/.bundle/${bundle.name}/main
     variables:
       catalog_name: maven_dev
     run_as:
       service_principal_name: e0b2052c-e4f4-4de9-a760-0f030a393983
 
-  # 3. Prod branch deployment target (CI/CD)
-  prod:
-    mode: production
-    workspace:
-      root_path: /Shared/.bundle/${bundle.name}/prod
-    variables:
-      catalog_name: maven_prod
-    run_as:
-      service_principal_name: e0b2052c-e4f4-4de9-a760-0f030a393983
-
-# Example Job Resource using the dynamic catalog variable
-resources:
-  jobs:
-    medallion_pipeline_job:
-      name: "[${bundle.target}] Medallion Pipeline Execution"
-      tasks:
-        - task_key: run_ingestion
-          notebook_task:
-            notebook_path: src/01_bronze_ingestion.py
-            base_parameters:
-              catalog: ${var.catalog_name}
+# resources/jobs.yml and resources/pipelines.yml are included here rather
+# than inlining every resource in this one file, so each resource type
+# stays easy to find and review independently (capstone requirement 112:
+# repo structure another engineer can understand).
+include:
+  - resources/*.yml
