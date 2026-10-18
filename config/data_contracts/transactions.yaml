@@ -1,0 +1,51 @@
+# Data contract: Transactions (POS sales line items)
+# Source: ADLS Gen2 landing/pos/transactions/ (CSV, Auto Loader)
+# Owner: Nagasupriya Bandlamudi (ingestion/Bronze), Khushi Gupta (Silver/Gold consumer)
+
+dataset: transactions
+source_system: ADLS_POS
+destination:
+  bronze: bronze.adls_transactions
+  silver: silver.transactions_clean
+  gold_contributes_to: [fact_sales]
+
+grain: "one row per (transaction_id)"
+business_key: transaction_id
+
+schema_evolution:
+  # The original 1997-1998 sample CSVs only ever had 6 columns and no
+  # transaction_id (one is synthesized as a stable hash of the natural key
+  # transaction_date+product_id+customer_id+store_id+row sequence, because
+  # the real POS export never assigned one). The synthetic generator
+  # extends this historically plus introduces two staged schema changes to
+  # prove Auto Loader's schema evolution (capstone requirement 16).
+  drop1:
+    date_range: ["1999-01-01", "2004-12-31"]
+    columns: [transaction_id, transaction_date, stock_date, product_id, customer_id, store_id, quantity]
+  drop2:
+    date_range: ["2005-01-01", "2017-12-31"]
+    adds: [payment_method]
+  drop3:
+    date_range: ["2018-01-01", "2026-10-17"]
+    adds: [promotion_id, discount_amount]
+
+columns:
+  - {name: transaction_id, type: string, nullable: false, note: "synthetic stable key; required business key"}
+  - {name: transaction_date, type: date, nullable: false}
+  - {name: stock_date, type: date, nullable: true, note: "should be <= transaction_date; violations are a quality rule"}
+  - {name: product_id, type: int, nullable: false, fk: products (product_master in MongoDB)}
+  - {name: customer_id, type: int, nullable: false, fk: customers (customer_master in MongoDB)}
+  - {name: store_id, type: int, nullable: false, fk: stores}
+  - {name: quantity, type: int, nullable: false, note: "must be > 0; anomaly generator injects 0 and negative values intentionally"}
+  - {name: payment_method, type: string, nullable: true, note: "present only from drop2 (2005) onward"}
+  - {name: promotion_id, type: string, nullable: true, note: "present only from drop3 (2018) onward; FK to promotions"}
+  - {name: discount_amount, type: decimal(10,2), nullable: true, note: "present only from drop3 onward"}
+
+intentional_anomalies:
+  - {code: ERR_QTY, field: quantity, effect: "non-numeric placeholder string", detection_rule: "quantity NOT RLIKE '^-?[0-9]+$' -> rescued_data"}
+  - {code: NEGATIVE_QTY, field: quantity, effect: "quantity < 0", detection_rule: "silver rule TXN_QTY_POSITIVE: quantity > 0, action=quarantine"}
+  - {code: ZERO_QTY, field: quantity, effect: "quantity = 0", detection_rule: "silver rule TXN_QTY_POSITIVE: quantity > 0, action=quarantine"}
+  - {code: BAD_DATE, field: transaction_date, effect: "malformed date string e.g. 1999-99-99", detection_rule: "unparseable by to_date -> rescued_data at Bronze"}
+  - {code: DUP_TXN, field: transaction_id, effect: "exact duplicate row emitted twice", detection_rule: "silver dedup: ROW_NUMBER() OVER (PARTITION BY transaction_id ORDER BY ingestion_timestamp DESC) = 1"}
+
+anomaly_rate: 0.05   # configurable; matches the ~5% design assumption, subject to override in generator config

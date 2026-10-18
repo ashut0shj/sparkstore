@@ -1,0 +1,87 @@
+# Data contracts: Customer Master and Product Master
+# Source: MongoDB Atlas, database `SPT_Stores` (confirmed as the real
+# production database by the team on 2026-10-18; exact collection names
+# were not independently confirmed beyond "holds the master data", so the
+# ingestion code discovers collections dynamically and this contract
+# documents the EXPECTED shape based on the original CSV samples
+# (MavenMarket_Customers.csv / MavenMarket_Products.csv), which are used
+# only as a realistic seed for the synthetic generator's Mongo documents,
+# not as a live ingestion source themselves.
+# Owner: Nagasupriya Bandlamudi (ingestion), Khushi Gupta (SCD2 customer + Gold dims)
+
+customer_master:
+  logical_name: customer_master
+  destination:
+    bronze: bronze.mongo_customer_master
+    silver: silver.customers_scd2
+    gold_contributes_to: [dim_customer]
+  grain: "one document per customer_id"
+  business_key: customer_id
+  scd2_change_detection_fields: [customer_address, customer_city, customer_state_province, customer_postal_code, customer_country, yearly_income, member_card]
+  fields:
+    - {name: customer_id, type: int, nullable: false}
+    - {name: customer_acct_num, type: string, nullable: true}
+    - {name: first_name, type: string, nullable: false}
+    - {name: last_name, type: string, nullable: false}
+    - {name: customer_address, type: string, nullable: true, pii: true}
+    - {name: customer_city, type: string, nullable: true, pii: true}
+    - {name: customer_state_province, type: string, nullable: true}
+    - {name: customer_postal_code, type: string, nullable: true, pii: true}
+    - {name: customer_country, type: string, nullable: true}
+    - {name: birthdate, type: date, nullable: true, pii: true}
+    - {name: marital_status, type: string, nullable: true}
+    - {name: yearly_income, type: string, nullable: true, note: "banded string e.g. '$50K - $70K', treated as a financial-sensitivity field"}
+    - {name: gender, type: string, nullable: true}
+    - {name: total_children, type: int, nullable: true}
+    - {name: num_children_at_home, type: int, nullable: true}
+    - {name: education, type: string, nullable: true}
+    - {name: acct_open_date, type: date, nullable: true}
+    - {name: member_card, type: string, nullable: true}
+    - {name: occupation, type: string, nullable: true}
+    - {name: homeowner, type: string, nullable: true}
+    - {name: email, type: string, nullable: true, pii: true, note: "synthetic addition; not present in original sample, added so a column-masking demo (requirement 68) has a realistic PII target"}
+    - {name: phone, type: string, nullable: true, pii: true, note: "synthetic addition for the same reason as email"}
+  load_strategy:
+    decision: incremental (change-aware upsert), not full overwrite
+    rationale: >
+      Customer is the mandated SCD2 dimension (capstone requirement 48).
+      A full overwrite on every run destroys the change history SCD2
+      depends on. The generator emits a `_source_last_modified` field per
+      document; ingestion reads only documents changed since the
+      previous successful run's high-water mark (tracked in
+      ops.ingestion_watermarks), and Silver applies MERGE-based SCD2
+      (src/silver/scd2_customer_store.py) rather than overwrite.
+    previous_behavior_replaced: >
+      The original mongo_ingestion.ipynb notebook did
+      `.mode("overwrite").option("overwriteSchema","true")` on every run,
+      which is replaced by this incremental approach.
+
+product_master:
+  logical_name: product_master
+  destination:
+    bronze: bronze.mongo_product_master
+    silver: silver.products_clean
+    gold_contributes_to: [dim_product]
+  grain: "one document per product_id"
+  business_key: product_id
+  fields:
+    - {name: product_id, type: int, nullable: false}
+    - {name: product_brand, type: string, nullable: true}
+    - {name: product_name, type: string, nullable: false}
+    - {name: product_sku, type: string, nullable: true}
+    - {name: product_category, type: string, nullable: true, note: "synthetic addition; needed for the Sales & Profit dashboard's category drilldown and absent from the original sample"}
+    - {name: product_retail_price, type: decimal(10,2), nullable: false}
+    - {name: product_cost, type: decimal(10,2), nullable: false, note: "cost measure source for Profit/Margin; no other cost source exists, so profit is only computable where this is populated (documented limitation)"}
+    - {name: product_weight, type: decimal(10,2), nullable: true}
+    - {name: recyclable, type: boolean, nullable: true}
+    - {name: low_fat, type: boolean, nullable: true}
+  load_strategy:
+    decision: full load on every run (not incremental)
+    rationale: >
+      Product has no mandated historical-tracking requirement in the
+      capstone (only Customer and, via Stores, store geography are
+      required SCD2 subjects). A small reference table with no history
+      requirement is simpler and safer as a full, idempotent overwrite
+      than as change-aware incremental logic that would add complexity
+      with no corresponding requirement benefit. Re-evaluate if the team
+      later adds price-history requirements.
