@@ -17,14 +17,13 @@ resources:
                         # pipeline per target schema).
       photon: false       # keep off for a capstone-scale dataset; revisit if profiling shows Photon helps (docs/PERFORMANCE)
       serverless: true    # prefer serverless DLT compute where entitlement allows; falls back to a small classic cluster otherwise (see below)
-      development: true   # set false only for the `main` target's production run, once stable
       continuous: false   # triggered/batch, not 24/7 -- matches the cost-management decision in docs/TEAM_STEPS_ASHUTOSH.md
 
       libraries:
         - notebook:
-            path: notebooks/05_silver_pipeline.ipynb
+            path: ../src/transformation/05_silver_pipeline.ipynb
         - notebook:
-            path: notebooks/06_gold_pipeline.ipynb
+            path: ../src/transformation/06_gold_pipeline.ipynb
 
       configuration:
         catalog_name: ${var.catalog_name}

@@ -36,7 +36,7 @@ resources:
           max_retries: 2
           min_retry_interval_millis: 60000
           notebook_task:
-            notebook_path: notebooks/01_bronze_adls_ingestion.ipynb
+            notebook_path: ../src/ingestion/01_bronze_adls_ingestion.ipynb
             base_parameters:
               catalog: ${var.catalog_name}
           new_cluster: &job_cluster
@@ -51,7 +51,7 @@ resources:
           max_retries: 2
           min_retry_interval_millis: 60000
           notebook_task:
-            notebook_path: notebooks/02_bronze_mongo_ingestion.ipynb
+            notebook_path: ../src/ingestion/02_bronze_mongo_ingestion.ipynb
             base_parameters:
               catalog: ${var.catalog_name}
           new_cluster: *job_cluster
@@ -67,7 +67,7 @@ resources:
           max_retries: 2
           min_retry_interval_millis: 60000
           notebook_task:
-            notebook_path: notebooks/03_bronze_kafka_ingestion.ipynb
+            notebook_path: ../src/ingestion/03_bronze_kafka_ingestion.ipynb
             base_parameters:
               catalog: ${var.catalog_name}
           new_cluster: *job_cluster
@@ -80,7 +80,7 @@ resources:
           timeout_seconds: 600
           max_retries: 1
           notebook_task:
-            notebook_path: notebooks/04_bronze_validation.ipynb
+            notebook_path: ../src/ingestion/04_bronze_validation.ipynb
             base_parameters:
               catalog: ${var.catalog_name}
           new_cluster: *job_cluster
@@ -95,7 +95,7 @@ resources:
             pipeline_id: ${resources.pipelines.medallion_silver_gold_pipeline.id}
 
         # This one task covers the DQ summary + reconciliation check + the
-        # dashboard freshness marker (notebooks/07_quality_and_reconciliation.ipynb)
+        # dashboard freshness marker (src/transformation/07_quality_and_reconciliation.ipynb)
         # -- previously two separate tasks/files, merged since the freshness
         # marker only ever needs to run right after reconciliation passes.
         - task_key: quality_and_reconciliation_report
@@ -104,7 +104,7 @@ resources:
           timeout_seconds: 600
           max_retries: 0   # a reconciliation failure means investigate, not retry blindly
           notebook_task:
-            notebook_path: notebooks/07_quality_and_reconciliation.ipynb
+            notebook_path: ../src/transformation/07_quality_and_reconciliation.ipynb
             base_parameters:
               catalog: ${var.catalog_name}
           new_cluster: *job_cluster
