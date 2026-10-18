@@ -15,8 +15,8 @@ resources:
                         # versions -- verify on your workspace and adjust to a
                         # second pipeline if your DBR version requires one
                         # pipeline per target schema).
-      photon: false       # keep off for a capstone-scale dataset; revisit if profiling shows Photon helps (docs/PERFORMANCE)
-      serverless: true    # prefer serverless DLT compute where entitlement allows; falls back to a small classic cluster otherwise (see below)
+      photon: false        # serverless DLT compute always runs on the Photon engine
+      serverless: true    # prefer serverless DLT compute where entitlement allows
       continuous: false   # triggered/batch, not 24/7 -- matches the cost-management decision in docs/TEAM_STEPS_ASHUTOSH.md
 
       libraries:
