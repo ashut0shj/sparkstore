@@ -7,7 +7,7 @@
 dataset: promotions
 source_system: SYNTHETIC_GENERATOR
 destination:
-  bronze: bronze.adls_promotions
+  bronze: bronze.promotions
   silver: silver.promotions_clean
   gold_contributes_to: [dim_promotion]
 

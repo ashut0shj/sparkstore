@@ -45,7 +45,7 @@ EXPECTATIONS = {
              lambda rows: rows[0][0] is None, "profit must be NULL (masked) for a data analyst"),
             ("SELECT COUNT(*) FROM {catalog}.gold.fact_sales",
              lambda rows: rows[0][0] > 0, "must still be able to read fact_sales rows (allowed, just masked columns)"),
-            ("SELECT COUNT(*) FROM {catalog}.bronze.adls_transactions",
+            ("SELECT COUNT(*) FROM {catalog}.bronze.transactions",
              None, "must be DENIED (no grant on bronze schema) -- expect this query to raise, not return 0"),
         ],
     },

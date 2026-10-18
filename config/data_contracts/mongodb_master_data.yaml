@@ -1,18 +1,10 @@
 # Data contracts: Customer Master and Product Master
-# Source: MongoDB Atlas, database `SPT_Stores` (confirmed as the real
-# production database by the team on 2026-10-18; exact collection names
-# were not independently confirmed beyond "holds the master data", so the
-# ingestion code discovers collections dynamically and this contract
-# documents the EXPECTED shape based on the original CSV samples
-# (MavenMarket_Customers.csv / MavenMarket_Products.csv), which are used
-# only as a realistic seed for the synthetic generator's Mongo documents,
-# not as a live ingestion source themselves.
-# Owner: Nagasupriya Bandlamudi (ingestion), Khushi Gupta (SCD2 customer + Gold dims)
+# Source: MongoDB Atlas, database `SPT_Stores` 
 
 customer_master:
   logical_name: customer_master
   destination:
-    bronze: bronze.mongo_customer_master
+    bronze: bronze.bronze_mongodb_customer_master
     silver: silver.customers_scd2
     gold_contributes_to: [dim_customer]
   grain: "one document per customer_id"
@@ -59,7 +51,7 @@ customer_master:
 product_master:
   logical_name: product_master
   destination:
-    bronze: bronze.mongo_product_master
+    bronze: bronze.bronze_mongodb_product_master
     silver: silver.products_clean
     gold_contributes_to: [dim_product]
   grain: "one document per product_id"
