@@ -16,7 +16,7 @@ resources:
                         # second pipeline if your DBR version requires one
                         # pipeline per target schema).
       photon: false        # serverless DLT compute always runs on the Photon engine
-      serverless: true    # prefer serverless DLT compute where entitlement allows
+      serverless: false    # prefer serverless DLT compute where entitlement allows
       continuous: false   # triggered/batch, not 24/7 -- matches the cost-management decision in docs/TEAM_STEPS_ASHUTOSH.md
 
       libraries:
