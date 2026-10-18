@@ -28,10 +28,3 @@ resources:
       configuration:
         catalog_name: ${var.catalog_name}
 
-      clusters:
-        - label: default
-          node_type_id: "Standard_DS3_v2"
-          autoscale:
-            min_workers: 1
-            max_workers: 2
-            mode: ENHANCED
