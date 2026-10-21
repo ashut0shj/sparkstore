@@ -19,7 +19,7 @@ targets:
   dev:
     default: true
     workspace:
-      host: https://<your-workspace-url>
+      host: https://adb-7405618616693902.2.azuredatabricks.net
     variables:
       catalog: maven_test
 
@@ -28,8 +28,12 @@ targets:
   prod:
     mode: production
     workspace:
-      host: https://<your-workspace-url>
+      host: https://adb-7405618616693902.2.azuredatabricks.net
     variables:
       catalog: maven_dev
     run_as:
-      user_name: guptajie2004@outlook.com   # or a service principal, see README
+      # The CI service principal (see README "CI/CD authentication setup").
+      # Replace with your own service principal's Application/Client ID -
+      # this is not sensitive, only its secret is, so it's fine committed
+      # here in plain text.
+      service_principal_name: "c12d752e-1328-45bb-bdea-5375cac70984"

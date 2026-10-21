@@ -2,7 +2,6 @@ resources:
   pipelines:
     maven_silver_pipeline:
       name: maven_silver_pipeline
-      pipeline_type: WORKSPACE
 
       # Compute left exactly as already tuned and tested manually:
       # single-node Standard_D4ds_v4, no workers - matches the project's
