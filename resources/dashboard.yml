@@ -1,0 +1,6 @@
+resources:
+  dashboards:
+    executive_operations_dashboard:
+      display_name: "Maven Market – Executive Drill-Down & Operations Dashboard"
+      file_path: ../dashboards/Maven Market – Executive Drill-Down & Operations Dashboard.lvdash.json
+      warehouse_id: ${var.sql_warehouse_id}

@@ -11,20 +11,18 @@ variables:
       pipeline, and both jobs resolve against. Defaults to maven_test
       (the scratch/iteration catalog) when nothing overrides it.
     default: maven_test
+  sql_warehouse_id:
+    description: "The Serverless or Classic SQL Warehouse ID used to render the Lakeview Dashboard."
 
 targets:
-  # Local / ad-hoc deploys: `databricks bundle deploy` with no -t flag
-  # lands here and uses maven_test, same as every notebook's own
-  # spark.conf.get(..., "maven_test") fallback.
   dev:
     default: true
     workspace:
       host: https://adb-7405618616693902.2.azuredatabricks.net
     variables:
       catalog: maven_test
+      sql_warehouse_id: "YOUR_DEV_SQL_WAREHOUSE_ID" # <--- Replace with your Dev Warehouse ID
 
-  # The only target CI/CD ever deploys to. Always resolves to maven_dev,
-  # on every push to main and on every PR, per the CI/CD policy below.
   prod:
     mode: production
     workspace:
@@ -32,9 +30,6 @@ targets:
       root_path: /Workspace/Users/c12d752e-1328-45bb-bdea-5375cac70984/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: maven_dev
+      sql_warehouse_id: "5a59190dddc02de1" # <--- Replace with your Prod Warehouse ID
     run_as:
-      # The CI service principal (see README "CI/CD authentication setup").
-      # Replace with your own service principal's Application/Client ID -
-      # this is not sensitive, only its secret is, so it's fine committed
-      # here in plain text.
       service_principal_name: "c12d752e-1328-45bb-bdea-5375cac70984"
