@@ -1,0 +1,82 @@
+resources:
+  jobs:
+    Bronze_Ingestion:
+      name: Bronze_Ingestion
+
+      # Same compute shape as the pipeline (Standard_D4ds_v4, no workers) -
+      # one ephemeral job cluster shared by all three bronze tasks, created
+      # fresh for this run and torn down right after. Explicit Shared /
+      # USER_ISOLATION access mode, matching the fix already documented in
+      # the Setup Runbook (Step 13): the Mongo Spark connector was dropped
+      # in favor of plain PyMongo specifically so this compute could stay
+      # Shared-mode usable, not Single User.
+      job_clusters:
+        - job_cluster_key: bronze_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12   # confirm this matches your workspace's current LTS at deploy time
+            node_type_id: Standard_D4ds_v4
+            driver_node_type_id: Standard_D4ds_v4
+            num_workers: 0
+            data_security_mode: USER_ISOLATION
+            autotermination_minutes: 20
+
+      tasks:
+        - task_key: bronze_csv
+          job_cluster_key: bronze_cluster
+          notebook_task:
+            notebook_path: ../src/bronze/01_bronze_ingestion.py
+            base_parameters:
+              catalog: ${var.catalog}
+          timeout_seconds: 1800
+          max_retries: 2
+          min_retry_interval_millis: 60000
+
+        - task_key: bronze_mongo
+          job_cluster_key: bronze_cluster
+          notebook_task:
+            notebook_path: ../src/bronze/02_bronze_mongo.py
+            base_parameters:
+              catalog: ${var.catalog}
+          timeout_seconds: 1800
+          max_retries: 2
+          min_retry_interval_millis: 60000
+
+        - task_key: bronze_kafka
+          job_cluster_key: bronze_cluster
+          notebook_task:
+            notebook_path: ../src/bronze/03_bronze_kafka.py
+            base_parameters:
+              catalog: ${var.catalog}
+          timeout_seconds: 1800
+          max_retries: 2
+          min_retry_interval_millis: 60000
+
+        # Once all three Bronze sources land, hand off to the Silver/Gold
+        # job as a single downstream run - this is the one place the whole
+        # pipeline is actually wired together end to end. Silver_and_Gold_Pipeline
+        # itself carries no schedule of its own; it only ever runs because
+        # this task calls it, so there is exactly one clock for the whole
+        # platform (this job's schedule, below) and one place to pause it.
+        - task_key: trigger_silver_gold
+          depends_on:
+            - task_key: bronze_csv
+            - task_key: bronze_mongo
+            - task_key: bronze_kafka
+          run_job_task:
+            job_id: ${resources.jobs.Silver_and_Gold_Pipeline.id}
+
+      queue:
+        enabled: true
+
+      # Single schedule for the whole platform: 10 PM IST daily.
+      # Deployed PAUSED on purpose - flip to UNPAUSED in the Jobs UI
+      # (or set pause_status: UNPAUSED here and redeploy) whenever you're
+      # ready to let it start spending compute automatically.
+      schedule:
+        quartz_cron_expression: "0 0 22 * * ?"
+        timezone_id: "Asia/Kolkata"
+        pause_status: PAUSED
+
+      email_notifications:
+        on_failure:
+          - nagasupriya04@gmail.com

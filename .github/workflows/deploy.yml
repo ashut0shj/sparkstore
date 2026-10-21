@@ -1,0 +1,37 @@
+name: Validate and deploy Maven Capstone bundle
+
+# Same behavior for both: every PR into main, and every push to main,
+# validates then deploys to the `prod` target (maven_dev). Neither path
+# ever runs a job or starts a pipeline update - `bundle deploy` only
+# registers/updates resource definitions in the workspace. The only thing
+# that spends compute is the Bronze_Ingestion job's own cron schedule,
+# which this workflow never touches.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Validate bundle (prod target / maven_dev)
+        run: databricks bundle validate -t prod
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+
+      - name: Deploy bundle (prod target / maven_dev) - definitions only, nothing is run
+        run: databricks bundle deploy -t prod
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}

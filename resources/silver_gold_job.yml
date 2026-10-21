@@ -1,0 +1,50 @@
+resources:
+  jobs:
+    Silver_and_Gold_Pipeline:
+      name: Silver_and_Gold_Pipeline
+
+      # Same compute shape as everywhere else in this project - used only
+      # for the dq_summary task, which previously pinned itself to a
+      # specific always-there interactive cluster (existing_cluster_id).
+      # That's replaced here with its own small ephemeral job cluster, so
+      # nothing in this project depends on a particular interactive
+      # cluster still existing in the workspace.
+      job_clusters:
+        - job_cluster_key: silver_gold_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12   # confirm this matches your workspace's current LTS at deploy time
+            node_type_id: Standard_D4ds_v4
+            driver_node_type_id: Standard_D4ds_v4
+            num_workers: 0
+            data_security_mode: USER_ISOLATION
+            autotermination_minutes: 20
+
+      tasks:
+        - task_key: maven_silver_gold
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.maven_silver_pipeline.id}
+            full_refresh: false
+
+        - task_key: dq_summary
+          depends_on:
+            - task_key: maven_silver_gold
+          job_cluster_key: silver_gold_cluster
+          notebook_task:
+            notebook_path: ../src/silver/dq_summary_report.py
+            base_parameters:
+              catalog: ${var.catalog}
+            source: WORKSPACE
+
+      queue:
+        enabled: true
+
+      performance_target: PERFORMANCE_OPTIMIZED
+
+      email_notifications:
+        on_failure:
+          - nagasupriya04@gmail.com
+
+      # No `schedule:` block here on purpose - this job only ever runs via
+      # the run_job_task at the end of Bronze_Ingestion, or manually. That
+      # keeps one single clock for the whole platform instead of two
+      # schedules that could drift out of sync with each other.

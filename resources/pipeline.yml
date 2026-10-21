@@ -1,0 +1,64 @@
+resources:
+  pipelines:
+    maven_silver_pipeline:
+      name: maven_silver_pipeline
+      pipeline_type: WORKSPACE
+
+      # Compute left exactly as already tuned and tested manually:
+      # single-node Standard_D4ds_v4, no workers - matches the project's
+      # documented "small, fixed data volume" scale (R006).
+      clusters:
+        - label: default
+          aws_attributes: {}
+          node_type_id: Standard_D4ds_v4
+          driver_node_type_id: Standard_D4ds_v4
+          num_workers: 0
+
+      libraries:
+        - notebook:
+            path: ../src/silver/silver_customers_products.py
+        - notebook:
+            path: ../src/silver/silver_facts_pos.py
+        - notebook:
+            path: ../src/silver/silver_kafka_events.py
+        - notebook:
+            path: ../src/silver/silver_store.py
+        - notebook:
+            path: ../src/silver/silver_dimensions_basic.py
+        - notebook:
+            path: ../src/gold/gold_dimensions.py
+        - notebook:
+            path: ../src/gold/gold_facts.py
+        - notebook:
+            path: ../src/gold/gold_summaries.py
+
+      # Every silver/*.py and gold/*.py notebook reads its catalog via
+      # spark.conf.get("catalog", "maven_test") - this is what actually
+      # supplies that value at run time. Without this block they would
+      # silently fall back to the "maven_test" default on every target.
+      configuration:
+        catalog: ${var.catalog}
+
+      schema: silver
+      catalog: ${var.catalog}
+
+      continuous: false       # triggered mode only - never left running
+      development: false
+      photon: false
+      edition: ADVANCED
+      channel: CURRENT
+      serverless: false
+
+      notifications:
+        - email_recipients:
+            - nagasupriya04@gmail.com
+          alerts:
+            - on-update-success
+            - on-update-failure
+            - on-update-fatal-failure
+            - on-flow-failure
+
+      event_log:
+        name: silver_pipeline_event_log
+        schema: ops
+        catalog: ${var.catalog}
