@@ -5,7 +5,7 @@
       "displayName": "Fact Sales",
       "config": {
         "version": "1.1",
-        "source": "SELECT\n  f.transaction_date,\n  CAST(DATE_TRUNC('MONTH', f.transaction_date) AS DATE) AS sales_month,\n  f.product_id, f.customer_id, f.store_id, f.quantity,\n  f.transaction_channel, f.payment_method,\n  f.net_sales_amount, f.gross_sales_amount, f.gross_profit_amount,\n  s.store_name, s.store_city, s.store_type,\n  r.sales_region, r.sales_district,\n  p.product_name, p.product_brand,\n  CONCAT(c.first_name, ' ', c.last_name) AS customer_name,\n  c.member_card\nFROM maven_test.gold.fact_sales f\nLEFT JOIN (\n  SELECT * FROM maven_test.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_test.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_test.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\nLEFT JOIN maven_test.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\n",
+        "source": "SELECT\n  f.transaction_date,\n  CAST(DATE_TRUNC('MONTH', f.transaction_date) AS DATE) AS sales_month,\n  f.product_id, f.customer_id, f.store_id, f.quantity,\n  f.transaction_channel, f.payment_method,\n  f.net_sales_amount, f.gross_sales_amount, f.gross_profit_amount,\n  s.store_name, s.store_city, s.store_type,\n  r.sales_region, r.sales_district,\n  p.product_name, p.product_brand,\n  CONCAT(c.first_name, ' ', c.last_name) AS customer_name,\n  c.member_card\nFROM maven_dev.gold.fact_sales f\nLEFT JOIN (\n  SELECT * FROM maven_dev.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_dev.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\nLEFT JOIN maven_dev.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\n",
         "dimensions": [
           {
             "name": "transaction_date",
@@ -278,7 +278,7 @@
       "displayName": "Revenue by Region",
       "config": {
         "version": "1.1",
-        "source": "maven_test.gold.revenue_by_region",
+        "source": "maven_dev.gold.revenue_by_region",
         "dimensions": [
           {
             "name": "sales_region",
@@ -320,7 +320,7 @@
       "displayName": "Sales by Customer Tier",
       "config": {
         "version": "1.1",
-        "source": "maven_test.gold.sales_by_customer_tier",
+        "source": "maven_dev.gold.sales_by_customer_tier",
         "dimensions": [
           {
             "name": "member_card",
@@ -349,7 +349,7 @@
       "displayName": "Top Products by Revenue",
       "config": {
         "version": "1.1",
-        "source": "SELECT product_name, product_brand, total_net_sales, total_gross_profit, total_quantity_sold FROM maven_test.gold.top_products_by_revenue ORDER BY total_net_sales DESC LIMIT 10\n",
+        "source": "SELECT product_name, product_brand, total_net_sales, total_gross_profit, total_quantity_sold FROM maven_dev.gold.top_products_by_revenue ORDER BY total_net_sales DESC LIMIT 10\n",
         "dimensions": [
           {
             "name": "product_name",
@@ -400,7 +400,7 @@
       "displayName": "Sales Growth by Month",
       "config": {
         "version": "1.1",
-        "source": "WITH monthly AS (\n  SELECT DATE_TRUNC('MONTH', transaction_date) AS sales_month,\n         SUM(net_sales_amount) AS monthly_sales\n  FROM maven_test.gold.fact_sales\n  GROUP BY 1\n) SELECT sales_month,\n       monthly_sales,\n       (monthly_sales - LAG(monthly_sales) OVER (ORDER BY sales_month))\n         / NULLIF(LAG(monthly_sales) OVER (ORDER BY sales_month), 0) * 100 AS growth_pct\nFROM monthly ORDER BY sales_month\n",
+        "source": "WITH monthly AS (\n  SELECT DATE_TRUNC('MONTH', transaction_date) AS sales_month,\n         SUM(net_sales_amount) AS monthly_sales\n  FROM maven_dev.gold.fact_sales\n  GROUP BY 1\n) SELECT sales_month,\n       monthly_sales,\n       (monthly_sales - LAG(monthly_sales) OVER (ORDER BY sales_month))\n         / NULLIF(LAG(monthly_sales) OVER (ORDER BY sales_month), 0) * 100 AS growth_pct\nFROM monthly ORDER BY sales_month\n",
         "dimensions": [
           {
             "name": "sales_month",
@@ -441,7 +441,7 @@
       "displayName": "Returns % by Month",
       "config": {
         "version": "1.1",
-        "source": "maven_test.gold.returns_pct_by_month",
+        "source": "maven_dev.gold.returns_pct_by_month",
         "dimensions": [
           {
             "name": "sales_month",
@@ -479,7 +479,7 @@
       "displayName": "Fact Returns",
       "config": {
         "version": "1.1",
-        "source": "SELECT\n  f.return_date,\n  CAST(DATE_TRUNC('MONTH', f.return_date) AS DATE) AS return_month,\n  f.product_id, f.store_id, f.quantity, f.refund_amount,\n  s.store_name, r.sales_region,\n  p.product_name, p.product_brand\nFROM maven_test.gold.fact_returns f\nLEFT JOIN (\n  SELECT * FROM maven_test.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_test.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_test.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\n",
+        "source": "SELECT\n  f.return_date,\n  CAST(DATE_TRUNC('MONTH', f.return_date) AS DATE) AS return_month,\n  f.product_id, f.store_id, f.quantity, f.refund_amount,\n  s.store_name, r.sales_region,\n  p.product_name, p.product_brand\nFROM maven_dev.gold.fact_returns f\nLEFT JOIN (\n  SELECT * FROM maven_dev.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_dev.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\n",
         "dimensions": [
           {
             "name": "return_date",
@@ -572,7 +572,7 @@
       "displayName": "Returns by Region and Month",
       "config": {
         "version": "1.1",
-        "source": "SELECT\n  r.sales_region,\n  DATE_TRUNC('MONTH', ret.return_date) AS return_month,\n  SUM(ret.quantity) AS returned_qty,\n  COALESCE(sm.sold_qty, 0) AS sold_qty,\n  CASE WHEN COALESCE(sm.sold_qty, 0) = 0 THEN 0.0\n       ELSE SUM(ret.quantity) / sm.sold_qty * 100 END AS return_rate_pct\nFROM maven_test.gold.fact_returns ret\nJOIN maven_test.gold.dim_store ds ON ret.store_id = ds.store_id\nJOIN maven_test.gold.dim_region r ON ds.region_id = r.region_id\nLEFT JOIN (\n  SELECT ds2.region_id AS region_id,\n         DATE_TRUNC('MONTH', fs.transaction_date) AS sales_month,\n         SUM(fs.quantity) AS sold_qty\n  FROM maven_test.gold.fact_sales fs\n  JOIN maven_test.gold.dim_store ds2 ON fs.store_id = ds2.store_id\n  GROUP BY 1, 2\n) sm ON sm.region_id = ds.region_id AND sm.sales_month = DATE_TRUNC('MONTH', ret.return_date)\nGROUP BY 1, 2, sm.sold_qty\nORDER BY 1, 2\n",
+        "source": "SELECT\n  r.sales_region,\n  DATE_TRUNC('MONTH', ret.return_date) AS return_month,\n  SUM(ret.quantity) AS returned_qty,\n  COALESCE(sm.sold_qty, 0) AS sold_qty,\n  CASE WHEN COALESCE(sm.sold_qty, 0) = 0 THEN 0.0\n       ELSE SUM(ret.quantity) / sm.sold_qty * 100 END AS return_rate_pct\nFROM maven_dev.gold.fact_returns ret\nJOIN maven_dev.gold.dim_store ds ON ret.store_id = ds.store_id\nJOIN maven_dev.gold.dim_region r ON ds.region_id = r.region_id\nLEFT JOIN (\n  SELECT ds2.region_id AS region_id,\n         DATE_TRUNC('MONTH', fs.transaction_date) AS sales_month,\n         SUM(fs.quantity) AS sold_qty\n  FROM maven_dev.gold.fact_sales fs\n  JOIN maven_dev.gold.dim_store ds2 ON fs.store_id = ds2.store_id\n  GROUP BY 1, 2\n) sm ON sm.region_id = ds.region_id AND sm.sales_month = DATE_TRUNC('MONTH', ret.return_date)\nGROUP BY 1, 2, sm.sold_qty\nORDER BY 1, 2\n",
         "dimensions": [
           {
             "name": "sales_region",
@@ -609,7 +609,7 @@
       "displayName": "Sales by Store",
       "config": {
         "version": "1.1",
-        "source": "SELECT s.store_id, s.store_name, s.store_city, r.sales_region, s.total_net_sales, s.transaction_line_count\nFROM maven_test.gold.sales_by_store s JOIN maven_test.gold.dim_store d ON s.store_id = d.store_id JOIN maven_test.gold.dim_region r ON d.region_id = r.region_id\n",
+        "source": "SELECT s.store_id, s.store_name, s.store_city, r.sales_region, s.total_net_sales, s.transaction_line_count\nFROM maven_dev.gold.sales_by_store s JOIN maven_dev.gold.dim_store d ON s.store_id = d.store_id JOIN maven_dev.gold.dim_region r ON d.region_id = r.region_id\n",
         "dimensions": [
           {
             "name": "store_id",
@@ -655,7 +655,7 @@
       "displayName": "Regions",
       "config": {
         "version": "1.1",
-        "source": "maven_test.gold.dim_region",
+        "source": "maven_dev.gold.dim_region",
         "dimensions": [
           {
             "name": "region_id",
@@ -677,7 +677,7 @@
       "displayName": "Customers",
       "config": {
         "version": "1.1",
-        "source": "maven_test.gold.dim_customer",
+        "source": "maven_dev.gold.dim_customer",
         "dimensions": [
           {
             "name": "customer_id",
@@ -699,7 +699,7 @@
       "displayName": "Customer Analytics",
       "config": {
         "version": "1.1",
-        "source": "WITH cust AS (\n  SELECT\n    CAST(c.customer_id AS STRING) AS customer_id,\n    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,\n    c.member_card, c.customer_city, c.customer_country, c.gender, c.yearly_income,\n    CAST(DATE_TRUNC('MONTH', MIN(f.transaction_date)) AS DATE) AS cohort_month,\n    SUM(f.net_sales_amount) AS total_spend,\n    COUNT(1) AS transaction_count,\n    COUNT(DISTINCT f.transaction_date) AS visit_days,\n    AVG(f.net_sales_amount) AS avg_transaction_value,\n    DATEDIFF(CURRENT_DATE(), MAX(f.transaction_date)) AS days_since_last_purchase\n  FROM maven_test.gold.fact_sales f\n  JOIN maven_test.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\n  GROUP BY 1, 2, 3, 4, 5, 6, 7\n)\nSELECT *,\n  CASE NTILE(4) OVER (ORDER BY total_spend DESC)\n    WHEN 1 THEN '1 - Top 25% (VIP)'\n    WHEN 2 THEN '2 - High'\n    WHEN 3 THEN '3 - Medium'\n    ELSE '4 - Low' END AS value_segment,\n  CASE WHEN visit_days = 1 THEN '1 visit (one-time)'\n       WHEN visit_days <= 3 THEN '2-3 visits'\n       WHEN visit_days <= 6 THEN '4-6 visits'\n       ELSE '7+ visits (loyal)' END AS frequency_band\nFROM cust\n",
+        "source": "WITH cust AS (\n  SELECT\n    CAST(c.customer_id AS STRING) AS customer_id,\n    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,\n    c.member_card, c.customer_city, c.customer_country, c.gender, c.yearly_income,\n    CAST(DATE_TRUNC('MONTH', MIN(f.transaction_date)) AS DATE) AS cohort_month,\n    SUM(f.net_sales_amount) AS total_spend,\n    COUNT(1) AS transaction_count,\n    COUNT(DISTINCT f.transaction_date) AS visit_days,\n    AVG(f.net_sales_amount) AS avg_transaction_value,\n    DATEDIFF(CURRENT_DATE(), MAX(f.transaction_date)) AS days_since_last_purchase\n  FROM maven_dev.gold.fact_sales f\n  JOIN maven_dev.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\n  GROUP BY 1, 2, 3, 4, 5, 6, 7\n)\nSELECT *,\n  CASE NTILE(4) OVER (ORDER BY total_spend DESC)\n    WHEN 1 THEN '1 - Top 25% (VIP)'\n    WHEN 2 THEN '2 - High'\n    WHEN 3 THEN '3 - Medium'\n    ELSE '4 - Low' END AS value_segment,\n  CASE WHEN visit_days = 1 THEN '1 visit (one-time)'\n       WHEN visit_days <= 3 THEN '2-3 visits'\n       WHEN visit_days <= 6 THEN '4-6 visits'\n       ELSE '7+ visits (loyal)' END AS frequency_band\nFROM cust\n",
         "dimensions": [
           {
             "name": "customer_id",
@@ -863,7 +863,7 @@
       "displayName": "Returns Analysis",
       "config": {
         "version": "1.1",
-        "source": "SELECT\n  DATE_TRUNC('MONTH', r.return_date) AS return_month,\n  p.product_brand,\n  SUM(r.refund_amount) AS total_return_value\nFROM maven_test.gold.fact_returns r JOIN maven_test.gold.dim_product p ON CAST(r.product_id AS BIGINT) = p.product_id GROUP BY 1, 2 ORDER BY 1\n",
+        "source": "SELECT\n  DATE_TRUNC('MONTH', r.return_date) AS return_month,\n  p.product_brand,\n  SUM(r.refund_amount) AS total_return_value\nFROM maven_dev.gold.fact_returns r JOIN maven_dev.gold.dim_product p ON CAST(r.product_id AS BIGINT) = p.product_id GROUP BY 1, 2 ORDER BY 1\n",
         "dimensions": [
           {
             "name": "return_month",
@@ -896,7 +896,7 @@
       "displayName": "Fact Online Orders",
       "config": {
         "version": "1.1",
-        "source": "SELECT\n  o.order_id,\n  CAST(o.customer_id AS INT) AS customer_id,\n  CAST(o.product_id AS INT) AS product_id,\n  CAST(o.quantity AS INT) AS quantity,\n  o.order_channel,\n  o.order_timestamp,\n  DATE_TRUNC('MINUTE', o.order_timestamp) AS order_minute,\n  DATE_TRUNC('HOUR', o.order_timestamp) AS order_hour,\n  o.gross_sales_amount, o.net_sales_amount,\n  p.product_brand, p.product_name\nFROM maven_test.gold.fact_online_orders o\nLEFT JOIN maven_test.gold.dim_product p ON o.product_id = p.product_id\n",
+        "source": "SELECT\n  o.order_id,\n  CAST(o.customer_id AS INT) AS customer_id,\n  CAST(o.product_id AS INT) AS product_id,\n  CAST(o.quantity AS INT) AS quantity,\n  o.order_channel,\n  o.order_timestamp,\n  DATE_TRUNC('MINUTE', o.order_timestamp) AS order_minute,\n  DATE_TRUNC('HOUR', o.order_timestamp) AS order_hour,\n  o.gross_sales_amount, o.net_sales_amount,\n  p.product_brand, p.product_name\nFROM maven_dev.gold.fact_online_orders o\nLEFT JOIN maven_dev.gold.dim_product p ON o.product_id = p.product_id\n",
         "dimensions": [
           {
             "name": "order_id",
@@ -1029,7 +1029,7 @@
       "displayName": "Fact Online Orders (Latest Day)",
       "config": {
         "version": "1.1",
-        "source": "SELECT order_id, customer_id, product_id, quantity, gross_sales_amount, order_timestamp\nFROM maven_test.gold.fact_online_orders\nWHERE DATE(order_timestamp) = (SELECT MAX(DATE(order_timestamp)) FROM maven_test.gold.fact_online_orders)\n",
+        "source": "SELECT order_id, customer_id, product_id, quantity, gross_sales_amount, order_timestamp\nFROM maven_dev.gold.fact_online_orders\nWHERE DATE(order_timestamp) = (SELECT MAX(DATE(order_timestamp)) FROM maven_dev.gold.fact_online_orders)\n",
         "dimensions": [
           {
             "name": "order_id",
@@ -1063,7 +1063,7 @@
       "displayName": "Data Quality Summary",
       "config": {
         "version": "1.1",
-        "source": "maven_test.ops.data_quality_summary",
+        "source": "maven_dev.ops.data_quality_summary",
         "dimensions": [
           {
             "name": "run_timestamp",
@@ -1154,7 +1154,7 @@
       "displayName": "Streaming Health Metrics",
       "config": {
         "version": "1.1",
-        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY table_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_test.ops.streaming_health_metrics\n) WHERE rn = 1\n",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY table_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.streaming_health_metrics\n) WHERE rn = 1\n",
         "dimensions": [
           {
             "name": "table_name",
@@ -1224,7 +1224,7 @@
       "displayName": "Reconciliation Summary",
       "config": {
         "version": "1.1",
-        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY fact_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_test.ops.reconciliation_summary\n) WHERE rn = 1\n",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY fact_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.reconciliation_summary\n) WHERE rn = 1\n",
         "dimensions": [
           {
             "name": "fact_name",
@@ -1254,7 +1254,7 @@
       "displayName": "Financial Reconciliation Audit",
       "config": {
         "version": "1.1",
-        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY metric ORDER BY run_timestamp DESC) AS rn\n  FROM maven_test.ops.financial_reconciliation\n) WHERE rn = 1\n",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY metric ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.financial_reconciliation\n) WHERE rn = 1\n",
         "dimensions": [
           {
             "name": "metric",
@@ -1296,7 +1296,7 @@
       "displayName": "Pipeline Operations",
       "config": {
         "version": "1.1",
-        "source": "SELECT `timestamp` AS event_time,\n       CAST(`timestamp` AS DATE) AS event_date,\n       level, event_type,\n       origin.pipeline_name AS pipeline_name,\n       origin.flow_name AS flow_name,\n       origin.update_id AS update_id,\n       message\nFROM maven_test.ops.silver_pipeline_event_log\n",
+        "source": "SELECT `timestamp` AS event_time,\n       CAST(`timestamp` AS DATE) AS event_date,\n       level, event_type,\n       origin.pipeline_name AS pipeline_name,\n       origin.flow_name AS flow_name,\n       origin.update_id AS update_id,\n       message\nFROM maven_dev.ops.silver_pipeline_event_log\n",
         "dimensions": [
           {
             "name": "event_time",
@@ -1384,7 +1384,7 @@
       "displayName": "Gold Table Freshness",
       "config": {
         "version": "1.1",
-        "source": "WITH t AS (\n  SELECT 'fact_sales' AS table_name, MAX(_ingested_at) AS last_ingested_at, COUNT(1) AS row_count FROM maven_test.gold.fact_sales\n  UNION ALL SELECT 'fact_returns', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.fact_returns\n  UNION ALL SELECT 'fact_online_orders', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.fact_online_orders\n  UNION ALL SELECT 'dim_customer', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.dim_customer\n  UNION ALL SELECT 'dim_product', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.dim_product\n  UNION ALL SELECT 'dim_store', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.dim_store\n  UNION ALL SELECT 'dim_region', MAX(_ingested_at), COUNT(1) FROM maven_test.gold.dim_region\n)\nSELECT *, TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) AS hours_since_refresh,\n       CASE WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 24 THEN 'Fresh (<24h)'\n            WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 72 THEN 'Aging (24-72h)'\n            ELSE 'Stale (>72h)' END AS freshness_status\nFROM t\n",
+        "source": "WITH t AS (\n  SELECT 'fact_sales' AS table_name, MAX(_ingested_at) AS last_ingested_at, COUNT(1) AS row_count FROM maven_dev.gold.fact_sales\n  UNION ALL SELECT 'fact_returns', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.fact_returns\n  UNION ALL SELECT 'fact_online_orders', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.fact_online_orders\n  UNION ALL SELECT 'dim_customer', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_customer\n  UNION ALL SELECT 'dim_product', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_product\n  UNION ALL SELECT 'dim_store', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_store\n  UNION ALL SELECT 'dim_region', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_region\n)\nSELECT *, TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) AS hours_since_refresh,\n       CASE WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 24 THEN 'Fresh (<24h)'\n            WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 72 THEN 'Aging (24-72h)'\n            ELSE 'Stale (>72h)' END AS freshness_status\nFROM t\n",
         "dimensions": [
           {
             "name": "table_name",
@@ -1444,7 +1444,7 @@
       "displayName": "Regional Manager (RLS)",
       "config": {
         "version": "1.1",
-        "source": "WITH store AS (\n  SELECT s.store_id, s.store_name, s.store_city, r.sales_region\n  FROM (SELECT * FROM maven_test.gold.dim_store\n        QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1) s\n  LEFT JOIN maven_test.gold.dim_region r ON s.region_id = r.region_id\n), sales AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', transaction_date) AS DATE) AS month,\n         SUM(net_sales_amount) AS net_sales, SUM(gross_profit_amount) AS gross_profit,\n         SUM(quantity) AS units_sold, CAST(0 AS DOUBLE) AS refund_amount, 0L AS units_returned\n  FROM maven_test.gold.fact_sales GROUP BY 1, 2\n), rets AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', return_date) AS DATE) AS month,\n         CAST(0 AS DOUBLE), CAST(0 AS DOUBLE), 0L, SUM(refund_amount), CAST(SUM(quantity) AS BIGINT)\n  FROM maven_test.gold.fact_returns GROUP BY 1, 2\n), u AS (SELECT * FROM sales UNION ALL SELECT * FROM rets)\nSELECT st.sales_region, st.store_name, st.store_city, u.*\nFROM u JOIN store st ON u.store_id = st.store_id\nWHERE current_user() IN ('prathamx11100@gmail.com', 'guptajie2004@outlook.com')\n   OR is_account_group_member('admins')\n   OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(st.sales_region, ' ', '_'))))\n",
+        "source": "WITH store AS (\n  SELECT s.store_id, s.store_name, s.store_city, r.sales_region\n  FROM (SELECT * FROM maven_dev.gold.dim_store\n        QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1) s\n  LEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\n), sales AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', transaction_date) AS DATE) AS month,\n         SUM(net_sales_amount) AS net_sales, SUM(gross_profit_amount) AS gross_profit,\n         SUM(quantity) AS units_sold, CAST(0 AS DOUBLE) AS refund_amount, 0L AS units_returned\n  FROM maven_dev.gold.fact_sales GROUP BY 1, 2\n), rets AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', return_date) AS DATE) AS month,\n         CAST(0 AS DOUBLE), CAST(0 AS DOUBLE), 0L, SUM(refund_amount), CAST(SUM(quantity) AS BIGINT)\n  FROM maven_dev.gold.fact_returns GROUP BY 1, 2\n), u AS (SELECT * FROM sales UNION ALL SELECT * FROM rets)\nSELECT st.sales_region, st.store_name, st.store_city, u.*\nFROM u JOIN store st ON u.store_id = st.store_id\nWHERE current_user() IN ('prathamx11100@gmail.com', 'guptajie2004@outlook.com')\n   OR is_account_group_member('admins')\n   OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(st.sales_region, ' ', '_'))))\n",
         "dimensions": [
           {
             "name": "sales_region",
@@ -1547,7 +1547,7 @@
       "displayName": "Returns by Product",
       "config": {
         "version": "1.1",
-        "source": "WITH s AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS sold_qty\n  FROM maven_test.gold.fact_sales GROUP BY 1\n), r AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS returned_qty, SUM(refund_amount) AS refund_amount\n  FROM maven_test.gold.fact_returns GROUP BY 1\n)\nSELECT p.product_name, p.product_brand,\n       COALESCE(s.sold_qty, 0) AS sold_qty, r.returned_qty, r.refund_amount\nFROM r\nJOIN maven_test.gold.dim_product p ON r.pid = p.product_id\nLEFT JOIN s ON s.pid = r.pid\n",
+        "source": "WITH s AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS sold_qty\n  FROM maven_dev.gold.fact_sales GROUP BY 1\n), r AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS returned_qty, SUM(refund_amount) AS refund_amount\n  FROM maven_dev.gold.fact_returns GROUP BY 1\n)\nSELECT p.product_name, p.product_brand,\n       COALESCE(s.sold_qty, 0) AS sold_qty, r.returned_qty, r.refund_amount\nFROM r\nJOIN maven_dev.gold.dim_product p ON r.pid = p.product_id\nLEFT JOIN s ON s.pid = r.pid\n",
         "dimensions": [
           {
             "name": "product_name",
