@@ -16,8 +16,12 @@ resources:
             node_type_id: Standard_D4ds_v4
             driver_node_type_id: Standard_D4ds_v4
             num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
+            custom_tags:
+              ResourceClass: SingleNode
             data_security_mode: USER_ISOLATION
-            autotermination_minutes: 20
 
       tasks:
         - task_key: maven_silver_gold

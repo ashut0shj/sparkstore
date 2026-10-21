@@ -8,10 +8,14 @@ resources:
       # documented "small, fixed data volume" scale (R006).
       clusters:
         - label: default
-          aws_attributes: {}
           node_type_id: Standard_D4ds_v4
           driver_node_type_id: Standard_D4ds_v4
           num_workers: 0
+          spark_conf:
+            spark.databricks.cluster.profile: singleNode
+            spark.master: local[*]
+          custom_tags:
+            ResourceClass: SingleNode
 
       libraries:
         - notebook:
@@ -42,7 +46,6 @@ resources:
       catalog: ${var.catalog}
 
       continuous: false       # triggered mode only - never left running
-      development: false
       photon: false
       edition: ADVANCED
       channel: CURRENT
