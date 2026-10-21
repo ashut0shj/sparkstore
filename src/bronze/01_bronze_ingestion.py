@@ -29,6 +29,9 @@ landing_root = "abfss://landing@mavenadlscapstone.dfs.core.windows.net/"
 from pyspark.sql.functions import current_timestamp, lit, col
 
 def ingest_csv_source(source_subpath, table_name):
+    spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.ops")
+    spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.ops.checkpoints")
+
     source_path = landing_root + source_subpath
     checkpoint_path = f"/Volumes/{catalog}/ops/checkpoints/bronze_{table_name}/checkpoint"
     schema_path = f"/Volumes/{catalog}/ops/checkpoints/bronze_{table_name}/schema"

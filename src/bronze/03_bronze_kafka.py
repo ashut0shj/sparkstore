@@ -43,6 +43,9 @@ kafka_options = {
 from pyspark.sql.functions import current_timestamp, lit, col
 
 def ingest_kafka_topic(topic_name, table_name):
+    spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.ops")
+    spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.ops.checkpoints")
+
     checkpoint_path = f"/Volumes/{catalog}/ops/checkpoints/bronze_{table_name}/checkpoint"
     target_table = f"{catalog}.bronze.{table_name}"
 
