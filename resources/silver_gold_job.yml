@@ -9,20 +9,6 @@ resources:
       # That's replaced here with its own small ephemeral job cluster, so
       # nothing in this project depends on a particular interactive
       # cluster still existing in the workspace.
-      job_clusters:
-        - job_cluster_key: silver_gold_cluster
-          new_cluster:
-            spark_version: 15.4.x-scala2.12   # confirm this matches your workspace's current LTS at deploy time
-            node_type_id: Standard_D4ds_v4
-            driver_node_type_id: Standard_D4ds_v4
-            num_workers: 0
-            spark_conf:
-              spark.databricks.cluster.profile: singleNode
-              spark.master: local[*]
-            custom_tags:
-              ResourceClass: SingleNode
-            data_security_mode: USER_ISOLATION
-
       tasks:
         - task_key: maven_silver_gold
           pipeline_task:
@@ -32,7 +18,7 @@ resources:
         - task_key: dq_summary
           depends_on:
             - task_key: maven_silver_gold
-          job_cluster_key: silver_gold_cluster
+          existing_cluster_id: "1019-171615-hy87js82"
           notebook_task:
             notebook_path: ../src/silver/dq_summary_report.py
             base_parameters:

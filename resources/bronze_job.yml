@@ -10,23 +10,9 @@ resources:
       # the Setup Runbook (Step 13): the Mongo Spark connector was dropped
       # in favor of plain PyMongo specifically so this compute could stay
       # Shared-mode usable, not Single User.
-      job_clusters:
-        - job_cluster_key: bronze_cluster
-          new_cluster:
-            spark_version: 15.4.x-scala2.12   # confirm this matches your workspace's current LTS at deploy time
-            node_type_id: Standard_D4ds_v4
-            driver_node_type_id: Standard_D4ds_v4
-            num_workers: 0
-            spark_conf:
-              spark.databricks.cluster.profile: singleNode
-              spark.master: local[*]
-            custom_tags:
-              ResourceClass: SingleNode
-            data_security_mode: USER_ISOLATION
-
       tasks:
         - task_key: bronze_csv
-          job_cluster_key: bronze_cluster
+          existing_cluster_id: "1019-171615-hy87js82"
           notebook_task:
             notebook_path: ../src/bronze/01_bronze_ingestion.py
             base_parameters:
@@ -36,7 +22,7 @@ resources:
           min_retry_interval_millis: 60000
 
         - task_key: bronze_mongo
-          job_cluster_key: bronze_cluster
+          existing_cluster_id: "1019-171615-hy87js82"
           notebook_task:
             notebook_path: ../src/bronze/02_bronze_mongo.py
             base_parameters:
@@ -46,7 +32,7 @@ resources:
           min_retry_interval_millis: 60000
 
         - task_key: bronze_kafka
-          job_cluster_key: bronze_cluster
+          existing_cluster_id: "1019-171615-hy87js82"
           notebook_task:
             notebook_path: ../src/bronze/03_bronze_kafka.py
             base_parameters:
