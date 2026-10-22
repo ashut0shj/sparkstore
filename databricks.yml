@@ -24,18 +24,18 @@ targets:
   dev:
     default: true
     workspace:
-      host: https://adb-7405618616693902.2.azuredatabricks.net
+      host: https://adb-7405616945565645.5.azuredatabricks.net
     variables:
       catalog: maven_test
-      sql_warehouse_id: "YOUR_DEV_SQL_WAREHOUSE_ID" # <--- Replace with your Dev Warehouse ID
+      sql_warehouse_id: "df6e0f4139c6d368" # <--- Replace with your Dev Warehouse ID
 
   prod:
     mode: production
     workspace:
-      host: https://adb-7405618616693902.2.azuredatabricks.net
-      root_path: /Workspace/Users/c12d752e-1328-45bb-bdea-5375cac70984/.bundle/${bundle.name}/${bundle.target}
+      host: https://adb-7405616945565645.5.azuredatabricks.net
+      root_path: /Workspace/Users/6e15d7e4-912f-464c-bc7b-2507be769f80/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: maven_dev
-      sql_warehouse_id: "5a59190dddc02de1" # <--- Replace with your Prod Warehouse ID
+      sql_warehouse_id: "df6e0f4139c6d368" # <--- Replace with your Prod Warehouse ID
     run_as:
-      service_principal_name: "c12d752e-1328-45bb-bdea-5375cac70984"
+      service_principal_name: "6e15d7e4-912f-464c-bc7b-2507be769f80"
