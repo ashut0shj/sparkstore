@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    maven_kafka_job:
+      name: maven kafka job
+      tasks:
+        - task_key: kafka_ingestion
+          notebook_task:
+            notebook_path: ../src/bronze/03_bronze_kafka
+            source: WORKSPACE
+          existing_cluster_id: 1009-113639-lkgoryqq
+        - task_key: kafka_silver_gold
+          depends_on:
+            - task_key: kafka_ingestion
+          pipeline_task:
+            pipeline_id: 3fe1ea62-d36a-4966-99c0-e172af4d0be8
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
