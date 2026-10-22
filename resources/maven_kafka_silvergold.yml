@@ -1,0 +1,47 @@
+resources:
+  pipelines:
+    pipeline_maven_kafka_silvergold:
+      name: maven_kafka_silvergold
+
+      clusters:
+        - label: default
+          node_type_id: Standard_D4ds_v4
+          driver_node_type_id: Standard_D4ds_v4
+          num_workers: 0
+          spark_conf:
+            spark.databricks.cluster.profile: singleNode
+            spark.master: local[*]
+          custom_tags:
+            ResourceClass: SingleNode
+
+      libraries:
+        - notebook:
+            path: ../src/silver/silver_kafka_events.py
+        - notebook:
+            path: ../src/gold/gold_facts_kafka.py
+
+      configuration:
+        catalog: ${var.catalog}
+
+      schema: silver
+      catalog: ${var.catalog}
+
+      continuous: false
+      photon: false
+      edition: ADVANCED
+      channel: CURRENT
+      serverless: false
+
+      notifications:
+        - email_recipients:
+            - nagasupriya04@gmail.com
+          alerts:
+            - on-update-success
+            - on-update-failure
+            - on-update-fatal-failure
+            - on-flow-failure
+
+      event_log:
+        name: kafka_pipeline_event_log
+        schema: ops
+        catalog: ${var.catalog}

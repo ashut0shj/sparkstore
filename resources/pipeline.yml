@@ -23,8 +23,6 @@ resources:
         - notebook:
             path: ../src/silver/silver_facts_pos.py
         - notebook:
-            path: ../src/silver/silver_kafka_events.py
-        - notebook:
             path: ../src/silver/silver_store.py
         - notebook:
             path: ../src/silver/silver_dimensions_basic.py

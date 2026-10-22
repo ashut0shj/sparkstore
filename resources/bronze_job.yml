@@ -12,7 +12,7 @@ resources:
       # Shared-mode usable, not Single User.
       tasks:
         - task_key: bronze_csv
-          existing_cluster_id: "1019-171615-hy87js82"
+          existing_cluster_id: "1009-113639-lkgoryqq"
           notebook_task:
             notebook_path: ../src/bronze/01_bronze_ingestion.py
             base_parameters:
@@ -22,7 +22,7 @@ resources:
           min_retry_interval_millis: 60000
 
         - task_key: bronze_mongo
-          existing_cluster_id: "1019-171615-hy87js82"
+          existing_cluster_id: "1009-113639-lkgoryqq"
           notebook_task:
             notebook_path: ../src/bronze/02_bronze_mongo.py
             base_parameters:
@@ -31,17 +31,7 @@ resources:
           max_retries: 2
           min_retry_interval_millis: 60000
 
-        - task_key: bronze_kafka
-          existing_cluster_id: "1019-171615-hy87js82"
-          notebook_task:
-            notebook_path: ../src/bronze/03_bronze_kafka.py
-            base_parameters:
-              catalog: ${var.catalog}
-          timeout_seconds: 1800
-          max_retries: 2
-          min_retry_interval_millis: 60000
-
-        # Once all three Bronze sources land, hand off to the Silver/Gold
+        # Once all Bronze sources land, hand off to the Silver/Gold
         # job as a single downstream run - this is the one place the whole
         # pipeline is actually wired together end to end. Silver_and_Gold_Pipeline
         # itself carries no schedule of its own; it only ever runs because
@@ -51,7 +41,6 @@ resources:
           depends_on:
             - task_key: bronze_csv
             - task_key: bronze_mongo
-            - task_key: bronze_kafka
           run_job_task:
             job_id: ${resources.jobs.Silver_and_Gold_Pipeline.id}
 

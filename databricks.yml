@@ -5,8 +5,10 @@ include:
   - resources/bronze_job.yml
   - resources/dashboard.yml
   - resources/pipeline.yml
-  # - resources/retail_sales_and_inventory_analytics.genie_space.yml
+  - resources/retail_sales_and_inventory_analytics.genie_space.yml
   - resources/silver_gold_job.yml
+  - resources/maven_kafka_silvergold.yml
+  - resources/maven_kafka_job.yml
 
 variables:
   catalog:
