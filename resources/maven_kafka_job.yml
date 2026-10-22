@@ -1,0 +1,29 @@
+resources:
+  jobs:
+    maven_kafka_job:
+      name: maven kafka job
+      tasks:
+        - task_key: kafka_ingestion
+          existing_cluster_id: "1009-113639-lkgoryqq"
+          notebook_task:
+            notebook_path: ../src/bronze/03_bronze_kafka.py
+            base_parameters:
+              catalog: ${var.catalog}
+          timeout_seconds: 1800
+          max_retries: 2
+          min_retry_interval_millis: 60000
+
+        - task_key: kafka_silver_gold
+          depends_on:
+            - task_key: kafka_ingestion
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.pipeline_maven_kafka_silvergold.id}
+            full_refresh: false
+
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
+
+      email_notifications:
+        on_failure:
+          - nagasupriya04@gmail.com
