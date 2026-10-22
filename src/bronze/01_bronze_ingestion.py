@@ -11,7 +11,7 @@
 
 dbutils.widgets.text("catalog", "maven_test")
 catalog = dbutils.widgets.get("catalog")
-landing_root = "abfss://landing@mavenadlscapstone.dfs.core.windows.net/"
+landing_root = "abfss://landing@adls2810.dfs.core.windows.net/"
 
 # COMMAND ----------
 
