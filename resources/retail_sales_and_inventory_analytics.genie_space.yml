@@ -2,7 +2,7 @@ resources:
   genie_spaces:
     retail_sales_and_inventory_analytics:
       title: "Retail Sales and Inventory Analytics"
-      warehouse_id: 5a59190dddc02de1
+      warehouse_id: ${var.sql_warehouse_id}
       file_path: ../src/retail_sales_and_inventory_analytics.geniespace.json
       description: Ask questions about Maven Market sales, returns, customers, and store performance.
-      parent_path: /Workspace/Users/guptajie2004@outlook.com
+      parent_path: /Shared
