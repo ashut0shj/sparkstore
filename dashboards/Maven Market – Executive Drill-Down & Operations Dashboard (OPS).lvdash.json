@@ -1,0 +1,3289 @@
+{
+  "datasets": [
+    {
+      "name": "fact_sales",
+      "displayName": "Fact Sales",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  f.transaction_date,\n  CAST(DATE_TRUNC('MONTH', f.transaction_date) AS DATE) AS sales_month,\n  f.product_id, f.customer_id, f.store_id, f.quantity,\n  f.transaction_channel, f.payment_method,\n  f.net_sales_amount, f.gross_sales_amount,\n  CASE\n    WHEN is_account_group_member('data_admins')\n      OR is_account_group_member('data_engineers')\n      OR is_account_group_member('executives')\n    THEN f.gross_profit_amount ELSE NULL\n  END AS gross_profit_amount,\n  s.store_name, s.store_city, s.store_type,\n  r.sales_region, r.sales_district,\n  p.product_name, p.product_brand,\n  CASE\n    WHEN is_account_group_member('data_admins')\n      OR is_account_group_member('data_engineers')\n      OR is_account_group_member('executives')\n    THEN CONCAT(c.first_name, ' ', c.last_name) ELSE '***MASKED***'\n  END AS customer_name,\n  CASE\n    WHEN is_account_group_member('data_admins')\n      OR is_account_group_member('data_engineers')\n      OR is_account_group_member('executives')\n    THEN c.member_card ELSE '***MASKED***'\n  END AS member_card\nFROM maven_dev.gold.fact_sales f\nLEFT JOIN (\n  SELECT * FROM maven_dev.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_dev.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\nLEFT JOIN maven_dev.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\nWHERE is_account_group_member('data_admins')\n   OR is_account_group_member('data_engineers')\n   OR is_account_group_member('executives')\n   OR is_account_group_member('data_analysts')\n   OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(r.sales_region, ' ', '_'))))",
+        "dimensions": [
+          {
+            "name": "transaction_date",
+            "expr": "transaction_date"
+          },
+          {
+            "name": "sales_month",
+            "expr": "sales_month",
+            "displayName": "Month"
+          },
+          {
+            "name": "product_id",
+            "expr": "product_id"
+          },
+          {
+            "name": "customer_id",
+            "expr": "customer_id"
+          },
+          {
+            "name": "store_id",
+            "expr": "store_id"
+          },
+          {
+            "name": "quantity",
+            "expr": "quantity"
+          },
+          {
+            "name": "transaction_channel",
+            "expr": "transaction_channel",
+            "displayName": "Channel"
+          },
+          {
+            "name": "payment_method",
+            "expr": "payment_method",
+            "displayName": "Payment Method"
+          },
+          {
+            "name": "store_name",
+            "expr": "store_name",
+            "displayName": "Store"
+          },
+          {
+            "name": "store_city",
+            "expr": "store_city",
+            "displayName": "City"
+          },
+          {
+            "name": "store_type",
+            "expr": "store_type",
+            "displayName": "Store Type"
+          },
+          {
+            "name": "sales_region",
+            "expr": "sales_region",
+            "displayName": "Region"
+          },
+          {
+            "name": "sales_district",
+            "expr": "sales_district",
+            "displayName": "District"
+          },
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand",
+            "displayName": "Brand"
+          },
+          {
+            "name": "customer_name",
+            "expr": "customer_name",
+            "displayName": "Customer"
+          },
+          {
+            "name": "member_card",
+            "expr": "member_card",
+            "displayName": "Loyalty Tier"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_net_sales",
+            "expr": "SUM(net_sales_amount)",
+            "displayName": "Revenue (Net Sales)",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_gross_sales",
+            "expr": "SUM(gross_sales_amount)",
+            "displayName": "Gross Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_gross_profit",
+            "expr": "SUM(gross_profit_amount)",
+            "displayName": "Gross Profit",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "avg_margin_pct",
+            "expr": "SUM(gross_profit_amount) / NULLIF(SUM(net_sales_amount), 0)",
+            "displayName": "Margin %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "transaction_count",
+            "expr": "COUNT(1)",
+            "displayName": "Transactions",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_quantity",
+            "expr": "SUM(quantity)",
+            "displayName": "Units Sold",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "distinct_customers",
+            "expr": "COUNT(DISTINCT customer_id)",
+            "displayName": "Customers",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "store_count",
+            "expr": "COUNT(DISTINCT store_id)",
+            "displayName": "Stores"
+          },
+          {
+            "name": "avg_basket",
+            "expr": "SUM(net_sales_amount) / NULLIF(COUNT(DISTINCT CONCAT(customer_id, '|', store_id, '|', CAST(transaction_date AS STRING))), 0)",
+            "displayName": "Avg Basket",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "displayName": "Monthly Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            },
+            "window": [
+              {
+                "order": "sales_month",
+                "range": "current",
+                "semiadditive": "last"
+              }
+            ],
+            "name": "monthly_sales",
+            "expr": "SUM(net_sales_amount)"
+          },
+          {
+            "displayName": "Prior Month Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            },
+            "window": [
+              {
+                "order": "sales_month",
+                "range": "current",
+                "offset": "-1 month",
+                "semiadditive": "last"
+              }
+            ],
+            "name": "prev_month_sales",
+            "expr": "SUM(net_sales_amount)"
+          },
+          {
+            "name": "selected_region",
+            "expr": "CASE WHEN COUNT(DISTINCT sales_region) = 1 THEN MAX(sales_region) ELSE 'All Regions' END",
+            "displayName": "Region"
+          },
+          {
+            "name": "selected_store",
+            "expr": "CASE WHEN COUNT(DISTINCT store_name) = 1 THEN MAX(store_name) ELSE 'All Stores' END",
+            "displayName": "Store"
+          },
+          {
+            "name": "selected_product",
+            "expr": "CASE WHEN COUNT(DISTINCT product_name) = 1 THEN MAX(product_name) ELSE 'All Products' END",
+            "displayName": "Product"
+          },
+          {
+            "name": "mom_growth_pct",
+            "expr": "(MEASURE(monthly_sales) - MEASURE(prev_month_sales)) / NULLIF(MEASURE(prev_month_sales), 0)",
+            "displayName": "MoM Growth %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "revenue_by_region",
+      "displayName": "Revenue by Region",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.gold.revenue_by_region",
+        "dimensions": [
+          {
+            "name": "sales_region",
+            "expr": "sales_region"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_net_sales",
+            "expr": "SUM(total_net_sales)",
+            "displayName": "Total Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          },
+          {
+            "name": "total_gross_profit",
+            "expr": "SUM(total_gross_profit)",
+            "displayName": "Total Gross Profit",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sales_by_customer_tier",
+      "displayName": "Sales by Customer Tier",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.gold.sales_by_customer_tier",
+        "dimensions": [
+          {
+            "name": "member_card",
+            "expr": "member_card"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_net_sales",
+            "expr": "SUM(total_net_sales)",
+            "displayName": "Total Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "top_products",
+      "displayName": "Top Products by Revenue",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT product_name, product_brand, total_net_sales, total_gross_profit, total_quantity_sold FROM maven_dev.gold.top_products_by_revenue ORDER BY total_net_sales DESC LIMIT 10\n",
+        "dimensions": [
+          {
+            "name": "product_name",
+            "expr": "product_name"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_net_sales",
+            "expr": "SUM(total_net_sales)",
+            "displayName": "Total Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          },
+          {
+            "name": "total_gross_profit",
+            "expr": "SUM(total_gross_profit)",
+            "displayName": "Total Gross Profit",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          },
+          {
+            "name": "total_quantity_sold",
+            "expr": "SUM(total_quantity_sold)",
+            "displayName": "Total Quantity Sold"
+          }
+        ]
+      }
+    },
+    {
+      "name": "sales_growth",
+      "displayName": "Sales Growth by Month",
+      "config": {
+        "version": "1.1",
+        "source": "WITH monthly AS (\n  SELECT DATE_TRUNC('MONTH', transaction_date) AS sales_month,\n         SUM(net_sales_amount) AS monthly_sales\n  FROM maven_dev.gold.fact_sales\n  GROUP BY 1\n) SELECT sales_month,\n       monthly_sales,\n       (monthly_sales - LAG(monthly_sales) OVER (ORDER BY sales_month))\n         / NULLIF(LAG(monthly_sales) OVER (ORDER BY sales_month), 0) * 100 AS growth_pct\nFROM monthly ORDER BY sales_month\n",
+        "dimensions": [
+          {
+            "name": "sales_month",
+            "expr": "sales_month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "growth_pct",
+            "expr": "SUM(growth_pct)",
+            "displayName": "Growth %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "monthly_sales",
+            "expr": "SUM(monthly_sales)",
+            "displayName": "Monthly Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "returns_pct_by_month",
+      "displayName": "Returns % by Month",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.gold.returns_pct_by_month",
+        "dimensions": [
+          {
+            "name": "sales_month",
+            "expr": "sales_month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "return_rate_pct",
+            "expr": "AVG(return_rate_pct)",
+            "displayName": "Return Rate %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "quantity_sold",
+            "expr": "SUM(quantity_sold)",
+            "displayName": "Quantity Sold"
+          },
+          {
+            "name": "quantity_returned",
+            "expr": "SUM(quantity_returned)",
+            "displayName": "Quantity Returned"
+          }
+        ]
+      }
+    },
+    {
+      "name": "fact_returns",
+      "displayName": "Fact Returns",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  f.return_date,\n  CAST(DATE_TRUNC('MONTH', f.return_date) AS DATE) AS return_month,\n  f.product_id, f.store_id, f.quantity, f.refund_amount,\n  s.store_name, r.sales_region,\n  p.product_name, p.product_brand\nFROM maven_dev.gold.fact_returns f\nLEFT JOIN (\n  SELECT * FROM maven_dev.gold.dim_store\n  QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n) s ON f.store_id = s.store_id\nLEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\nLEFT JOIN maven_dev.gold.dim_product p ON CAST(f.product_id AS BIGINT) = p.product_id\nWHERE is_account_group_member('data_admins')\n   OR is_account_group_member('data_engineers')\n   OR is_account_group_member('executives')\n   OR is_account_group_member('data_analysts')\n   OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(r.sales_region, ' ', '_'))))",
+        "dimensions": [
+          {
+            "name": "return_date",
+            "expr": "return_date"
+          },
+          {
+            "name": "return_month",
+            "expr": "return_month",
+            "displayName": "Return Month"
+          },
+          {
+            "name": "product_id",
+            "expr": "product_id"
+          },
+          {
+            "name": "store_id",
+            "expr": "store_id"
+          },
+          {
+            "name": "quantity",
+            "expr": "quantity"
+          },
+          {
+            "name": "store_name",
+            "expr": "store_name",
+            "displayName": "Store"
+          },
+          {
+            "name": "sales_region",
+            "expr": "sales_region",
+            "displayName": "Region"
+          },
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand",
+            "displayName": "Brand"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_refund_amount",
+            "expr": "SUM(refund_amount)",
+            "displayName": "Return Value",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_returns_qty",
+            "expr": "SUM(quantity)",
+            "displayName": "Units Returned",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "return_count",
+            "expr": "COUNT(1)",
+            "displayName": "Return Lines",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "returns_by_region_month",
+      "displayName": "Returns by Region and Month",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  r.sales_region,\n  DATE_TRUNC('MONTH', ret.return_date) AS return_month,\n  SUM(ret.quantity) AS returned_qty,\n  COALESCE(sm.sold_qty, 0) AS sold_qty,\n  CASE WHEN COALESCE(sm.sold_qty, 0) = 0 THEN 0.0\n       ELSE SUM(ret.quantity) / sm.sold_qty * 100 END AS return_rate_pct\nFROM maven_dev.gold.fact_returns ret\nJOIN maven_dev.gold.dim_store ds ON ret.store_id = ds.store_id\nJOIN maven_dev.gold.dim_region r ON ds.region_id = r.region_id\nLEFT JOIN (\n  SELECT ds2.region_id AS region_id,\n         DATE_TRUNC('MONTH', fs.transaction_date) AS sales_month,\n         SUM(fs.quantity) AS sold_qty\n  FROM maven_dev.gold.fact_sales fs\n  JOIN maven_dev.gold.dim_store ds2 ON fs.store_id = ds2.store_id\n  GROUP BY 1, 2\n) sm ON sm.region_id = ds.region_id AND sm.sales_month = DATE_TRUNC('MONTH', ret.return_date)\nGROUP BY 1, 2, sm.sold_qty\nORDER BY 1, 2\n",
+        "dimensions": [
+          {
+            "name": "sales_region",
+            "expr": "sales_region"
+          },
+          {
+            "name": "return_month",
+            "expr": "return_month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "return_rate_pct",
+            "expr": "AVG(return_rate_pct)",
+            "displayName": "Return Rate %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "returned_qty",
+            "expr": "SUM(returned_qty)",
+            "displayName": "Returned Qty"
+          }
+        ]
+      }
+    },
+    {
+      "name": "sales_by_store",
+      "displayName": "Sales by Store",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT s.store_id, s.store_name, s.store_city, r.sales_region, s.total_net_sales, s.transaction_line_count\nFROM maven_dev.gold.sales_by_store s JOIN maven_dev.gold.dim_store d ON s.store_id = d.store_id JOIN maven_dev.gold.dim_region r ON d.region_id = r.region_id\n",
+        "dimensions": [
+          {
+            "name": "store_id",
+            "expr": "store_id"
+          },
+          {
+            "name": "store_name",
+            "expr": "store_name"
+          },
+          {
+            "name": "store_city",
+            "expr": "store_city"
+          },
+          {
+            "name": "sales_region",
+            "expr": "sales_region"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_net_sales",
+            "expr": "SUM(total_net_sales)",
+            "displayName": "Total Net Sales",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          },
+          {
+            "name": "transaction_line_count",
+            "expr": "SUM(transaction_line_count)",
+            "displayName": "Transactions"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dim_region",
+      "displayName": "Regions",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.gold.dim_region",
+        "dimensions": [
+          {
+            "name": "region_id",
+            "expr": "region_id"
+          },
+          {
+            "name": "sales_district",
+            "expr": "sales_district"
+          },
+          {
+            "name": "sales_region",
+            "expr": "sales_region"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dim_customer",
+      "displayName": "Customers",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.gold.dim_customer",
+        "dimensions": [
+          {
+            "name": "customer_id",
+            "expr": "customer_id"
+          },
+          {
+            "name": "customer_name",
+            "expr": "CONCAT(first_name, ' ', last_name)"
+          },
+          {
+            "name": "member_card",
+            "expr": "member_card"
+          }
+        ]
+      }
+    },
+    {
+      "name": "customer_analytics",
+      "displayName": "Customer Analytics",
+      "config": {
+        "version": "1.1",
+        "source": "WITH cust AS (\n  SELECT\n    CAST(c.customer_id AS STRING) AS customer_id,\n    CASE\n      WHEN is_account_group_member('data_admins')\n        OR is_account_group_member('data_engineers')\n        OR is_account_group_member('executives')\n      THEN CONCAT(c.first_name, ' ', c.last_name) ELSE '***MASKED***'\n    END AS customer_name,\n    CASE\n      WHEN is_account_group_member('data_admins')\n        OR is_account_group_member('data_engineers')\n        OR is_account_group_member('executives')\n      THEN c.member_card ELSE '***MASKED***'\n    END AS member_card,\n    c.customer_city, c.customer_country, c.gender, c.yearly_income,\n    CAST(DATE_TRUNC('MONTH', MIN(f.transaction_date)) AS DATE) AS cohort_month,\n    SUM(f.net_sales_amount) AS total_spend,\n    COUNT(1) AS transaction_count,\n    COUNT(DISTINCT f.transaction_date) AS visit_days,\n    AVG(f.net_sales_amount) AS avg_transaction_value,\n    DATEDIFF(CURRENT_DATE(), MAX(f.transaction_date)) AS days_since_last_purchase\n  FROM maven_dev.gold.fact_sales f\n  JOIN maven_dev.gold.dim_customer c ON CAST(f.customer_id AS BIGINT) = c.customer_id\n  LEFT JOIN (\n    SELECT * FROM maven_dev.gold.dim_store\n    QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1\n  ) s ON f.store_id = s.store_id\n  LEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\n  WHERE is_account_group_member('data_admins')\n     OR is_account_group_member('data_engineers')\n     OR is_account_group_member('executives')\n     OR is_account_group_member('data_analysts')\n     OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(r.sales_region, ' ', '_'))))\n  GROUP BY 1, 2, 3, 4, 5, 6, 7\n)\nSELECT *,\n  CASE NTILE(4) OVER (ORDER BY total_spend DESC)\n    WHEN 1 THEN '1 - Top 25% (VIP)'\n    WHEN 2 THEN '2 - High'\n    WHEN 3 THEN '3 - Medium'\n    ELSE '4 - Low' END AS value_segment,\n  CASE WHEN visit_days = 1 THEN '1 visit (one-time)'\n       WHEN visit_days <= 3 THEN '2-3 visits'\n       WHEN visit_days <= 6 THEN '4-6 visits'\n       ELSE '7+ visits (loyal)' END AS frequency_band\nFROM cust",
+        "dimensions": [
+          {
+            "name": "customer_id",
+            "expr": "customer_id"
+          },
+          {
+            "name": "customer_name",
+            "expr": "customer_name",
+            "displayName": "Customer"
+          },
+          {
+            "name": "member_card",
+            "expr": "member_card",
+            "displayName": "Loyalty Tier"
+          },
+          {
+            "name": "customer_city",
+            "expr": "customer_city",
+            "displayName": "City"
+          },
+          {
+            "name": "customer_country",
+            "expr": "customer_country",
+            "displayName": "Country"
+          },
+          {
+            "name": "gender",
+            "expr": "gender"
+          },
+          {
+            "name": "yearly_income",
+            "expr": "yearly_income",
+            "displayName": "Income Band"
+          },
+          {
+            "name": "cohort_month",
+            "expr": "cohort_month",
+            "displayName": "Acquisition Cohort"
+          },
+          {
+            "name": "value_segment",
+            "expr": "value_segment",
+            "displayName": "Value Segment"
+          },
+          {
+            "name": "frequency_band",
+            "expr": "frequency_band",
+            "displayName": "Purchase Frequency"
+          }
+        ],
+        "measures": [
+          {
+            "name": "distinct_customer_count",
+            "expr": "COUNT(DISTINCT customer_id)",
+            "displayName": "Customers",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_spend",
+            "expr": "SUM(total_spend)",
+            "displayName": "Total Spend",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "transaction_count",
+            "expr": "SUM(transaction_count)",
+            "displayName": "Transactions",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "avg_transaction_value",
+            "expr": "SUM(total_spend) / NULLIF(SUM(transaction_count), 0)",
+            "displayName": "Avg Transaction Value",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "name": "avg_basket",
+            "expr": "SUM(total_spend) / NULLIF(SUM(visit_days), 0)",
+            "displayName": "Avg Basket (per visit)",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "name": "avg_ltv",
+            "expr": "AVG(total_spend)",
+            "displayName": "Avg Customer LTV",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "repeat_rate",
+            "expr": "AVG(CASE WHEN visit_days > 1 THEN 1.0 ELSE 0.0 END)",
+            "displayName": "Repeat Customer %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "days_since_last_purchase",
+            "expr": "AVG(days_since_last_purchase)",
+            "displayName": "Days Since Last Purchase",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "returns_analysis",
+      "displayName": "Returns Analysis",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  DATE_TRUNC('MONTH', r.return_date) AS return_month,\n  p.product_brand,\n  SUM(r.refund_amount) AS total_return_value\nFROM maven_dev.gold.fact_returns r JOIN maven_dev.gold.dim_product p ON CAST(r.product_id AS BIGINT) = p.product_id GROUP BY 1, 2 ORDER BY 1\n",
+        "dimensions": [
+          {
+            "name": "return_month",
+            "expr": "return_month"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_return_value",
+            "expr": "SUM(total_return_value)",
+            "displayName": "Total Return Value",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "fact_online_orders",
+      "displayName": "Fact Online Orders",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  o.order_id,\n  CAST(o.customer_id AS INT) AS customer_id,\n  CAST(o.product_id AS INT) AS product_id,\n  CAST(o.quantity AS INT) AS quantity,\n  o.order_channel,\n  o.order_timestamp,\n  DATE_TRUNC('MINUTE', o.order_timestamp) AS order_minute,\n  DATE_TRUNC('HOUR', o.order_timestamp) AS order_hour,\n  o.gross_sales_amount, o.net_sales_amount,\n  p.product_brand, p.product_name\nFROM maven_dev.gold.fact_online_orders o\nLEFT JOIN maven_dev.gold.dim_product p ON o.product_id = p.product_id\n",
+        "dimensions": [
+          {
+            "name": "order_id",
+            "expr": "order_id"
+          },
+          {
+            "name": "customer_id",
+            "expr": "customer_id"
+          },
+          {
+            "name": "product_id",
+            "expr": "product_id"
+          },
+          {
+            "name": "quantity",
+            "expr": "quantity"
+          },
+          {
+            "name": "order_channel",
+            "expr": "order_channel",
+            "displayName": "Order Channel"
+          },
+          {
+            "name": "order_timestamp",
+            "expr": "order_timestamp"
+          },
+          {
+            "name": "order_minute",
+            "expr": "order_minute",
+            "displayName": "Minute"
+          },
+          {
+            "name": "order_hour",
+            "expr": "order_hour",
+            "displayName": "Hour"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand",
+            "displayName": "Brand"
+          },
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product"
+          }
+        ],
+        "measures": [
+          {
+            "name": "order_count",
+            "expr": "COUNT(1)",
+            "displayName": "Orders",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_gross_sales",
+            "expr": "SUM(gross_sales_amount)",
+            "displayName": "Revenue",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "active_customers",
+            "expr": "COUNT(DISTINCT customer_id)",
+            "displayName": "Active Customers",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "orders_per_minute",
+            "expr": "COUNT(1) / NULLIF(COUNT(DISTINCT order_minute), 0)",
+            "displayName": "Orders / Minute",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "revenue_per_minute",
+            "expr": "SUM(gross_sales_amount) / NULLIF(COUNT(DISTINCT order_minute), 0)",
+            "displayName": "Revenue / Minute",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "latest_event_time",
+            "expr": "MAX(order_timestamp)",
+            "displayName": "Latest Event Time",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "locale_short_month",
+              "timeFormat": "locale_hour_minute_second"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "fact_online_orders_today",
+      "displayName": "Fact Online Orders (Latest Day)",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT order_id, customer_id, product_id, quantity, gross_sales_amount, order_timestamp\nFROM maven_dev.gold.fact_online_orders\nWHERE DATE(order_timestamp) = (SELECT MAX(DATE(order_timestamp)) FROM maven_dev.gold.fact_online_orders)\n",
+        "dimensions": [
+          {
+            "name": "order_id",
+            "expr": "order_id"
+          }
+        ],
+        "measures": [
+          {
+            "name": "order_count",
+            "expr": "COUNT(1)",
+            "displayName": "Orders (Latest Day)"
+          },
+          {
+            "name": "total_gross_sales",
+            "expr": "SUM(gross_sales_amount)",
+            "displayName": "Revenue (Latest Day)",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dq_summary",
+      "displayName": "Data Quality Summary",
+      "config": {
+        "version": "1.1",
+        "source": "maven_dev.ops.data_quality_summary",
+        "dimensions": [
+          {
+            "name": "run_timestamp",
+            "expr": "run_timestamp"
+          },
+          {
+            "name": "table_name",
+            "expr": "table_name",
+            "displayName": "Table"
+          },
+          {
+            "name": "rule_name",
+            "expr": "rule_name",
+            "displayName": "Rule"
+          },
+          {
+            "name": "check_status",
+            "expr": "CASE WHEN records_failed > 0 THEN 'Failed' ELSE 'Passed' END",
+            "displayName": "Check Status"
+          }
+        ],
+        "measures": [
+          {
+            "name": "avg_failure_percentage",
+            "expr": "AVG(failure_percentage)",
+            "displayName": "Failure %",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "name": "quality_score",
+            "expr": "1 - SUM(records_failed) / NULLIF(SUM(records_checked), 0)",
+            "displayName": "Quality Score",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "name": "failed_checks",
+            "expr": "COUNT(1) FILTER (WHERE records_failed > 0)",
+            "displayName": "Failed Checks"
+          },
+          {
+            "name": "total_checks",
+            "expr": "COUNT(1)",
+            "displayName": "Total Checks"
+          },
+          {
+            "name": "records_failed",
+            "expr": "SUM(records_failed)",
+            "displayName": "Records Failed",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "records_checked",
+            "expr": "SUM(records_checked)",
+            "displayName": "Records Checked",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "streaming_health",
+      "displayName": "Streaming Health Metrics",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY table_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.streaming_health_metrics\n) WHERE rn = 1\n",
+        "dimensions": [
+          {
+            "name": "table_name",
+            "expr": "table_name"
+          },
+          {
+            "name": "throughput_total_rows",
+            "expr": "throughput_total_rows"
+          },
+          {
+            "name": "quarantined_rows",
+            "expr": "quarantined_rows"
+          },
+          {
+            "name": "latest_event_time",
+            "expr": "latest_event_time"
+          },
+          {
+            "name": "avg_ingest_lag_seconds",
+            "expr": "avg_ingest_lag_seconds"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_quarantined",
+            "expr": "SUM(quarantined_rows)",
+            "displayName": "Quarantined Records",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "total_throughput",
+            "expr": "SUM(throughput_total_rows)",
+            "displayName": "Rows Processed",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "max_lag_seconds",
+            "expr": "MAX(avg_ingest_lag_seconds)",
+            "displayName": "Max Ingest Lag (s)",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "reconciliation",
+      "displayName": "Reconciliation Summary",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY fact_name ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.reconciliation_summary\n) WHERE rn = 1\n",
+        "dimensions": [
+          {
+            "name": "fact_name",
+            "expr": "fact_name"
+          },
+          {
+            "name": "silver_row_count",
+            "expr": "silver_row_count"
+          },
+          {
+            "name": "gold_row_count",
+            "expr": "gold_row_count"
+          },
+          {
+            "name": "counts_match",
+            "expr": "counts_match"
+          },
+          {
+            "name": "run_timestamp",
+            "expr": "run_timestamp"
+          }
+        ]
+      }
+    },
+    {
+      "name": "financial_reconciliation",
+      "displayName": "Financial Reconciliation Audit",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY metric ORDER BY run_timestamp DESC) AS rn\n  FROM maven_dev.ops.financial_reconciliation\n) WHERE rn = 1\n",
+        "dimensions": [
+          {
+            "name": "metric",
+            "expr": "metric"
+          },
+          {
+            "name": "naive_bronze_gross_revenue",
+            "expr": "naive_bronze_gross_revenue"
+          },
+          {
+            "name": "gold_net_sales_revenue",
+            "expr": "gold_net_sales_revenue"
+          },
+          {
+            "name": "total_gap",
+            "expr": "total_gap"
+          },
+          {
+            "name": "gap_from_quarantined_rows",
+            "expr": "gap_from_quarantined_rows"
+          },
+          {
+            "name": "gap_from_discounts",
+            "expr": "gap_from_discounts"
+          },
+          {
+            "name": "duplicate_rows_removed",
+            "expr": "duplicate_rows_removed"
+          },
+          {
+            "name": "run_timestamp",
+            "expr": "run_timestamp"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pipeline_ops",
+      "displayName": "Pipeline Operations",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT `timestamp` AS event_time,\n       CAST(`timestamp` AS DATE) AS event_date,\n       level, event_type,\n       origin.pipeline_name AS pipeline_name,\n       origin.flow_name AS flow_name,\n       origin.update_id AS update_id,\n       message\nFROM maven_dev.ops.silver_pipeline_event_log\n",
+        "dimensions": [
+          {
+            "name": "event_time",
+            "expr": "event_time"
+          },
+          {
+            "name": "event_date",
+            "expr": "event_date",
+            "displayName": "Date"
+          },
+          {
+            "name": "level",
+            "expr": "level",
+            "displayName": "Level"
+          },
+          {
+            "name": "event_type",
+            "expr": "event_type",
+            "displayName": "Event Type"
+          },
+          {
+            "name": "pipeline_name",
+            "expr": "pipeline_name",
+            "displayName": "Pipeline"
+          },
+          {
+            "name": "flow_name",
+            "expr": "flow_name",
+            "displayName": "Flow"
+          },
+          {
+            "name": "message",
+            "expr": "message"
+          }
+        ],
+        "measures": [
+          {
+            "name": "event_count",
+            "expr": "COUNT(1)",
+            "displayName": "Events",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "error_count",
+            "expr": "COUNT(1) FILTER (WHERE level = 'ERROR')",
+            "displayName": "Errors"
+          },
+          {
+            "name": "warn_count",
+            "expr": "COUNT(1) FILTER (WHERE level = 'WARN')",
+            "displayName": "Warnings"
+          },
+          {
+            "name": "pipeline_updates",
+            "expr": "COUNT(DISTINCT update_id)",
+            "displayName": "Pipeline Updates"
+          },
+          {
+            "name": "failed_updates",
+            "expr": "COUNT(DISTINCT update_id) FILTER (WHERE level = 'ERROR')",
+            "displayName": "Failed Updates"
+          },
+          {
+            "name": "latest_event",
+            "expr": "MAX(event_time)",
+            "displayName": "Last Pipeline Event",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "locale_short_month",
+              "timeFormat": "locale_hour_minute"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "data_freshness",
+      "displayName": "Gold Table Freshness",
+      "config": {
+        "version": "1.1",
+        "source": "WITH t AS (\n  SELECT 'fact_sales' AS table_name, MAX(_ingested_at) AS last_ingested_at, COUNT(1) AS row_count FROM maven_dev.gold.fact_sales\n  UNION ALL SELECT 'fact_returns', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.fact_returns\n  UNION ALL SELECT 'fact_online_orders', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.fact_online_orders\n  UNION ALL SELECT 'dim_customer', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_customer\n  UNION ALL SELECT 'dim_product', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_product\n  UNION ALL SELECT 'dim_store', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_store\n  UNION ALL SELECT 'dim_region', MAX(_ingested_at), COUNT(1) FROM maven_dev.gold.dim_region\n)\nSELECT *, TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) AS hours_since_refresh,\n       CASE WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 24 THEN 'Fresh (<24h)'\n            WHEN TIMESTAMPDIFF(HOUR, last_ingested_at, CURRENT_TIMESTAMP()) <= 72 THEN 'Aging (24-72h)'\n            ELSE 'Stale (>72h)' END AS freshness_status\nFROM t\n",
+        "dimensions": [
+          {
+            "name": "table_name",
+            "expr": "table_name",
+            "displayName": "Gold Table"
+          },
+          {
+            "name": "last_ingested_at",
+            "expr": "last_ingested_at",
+            "displayName": "Last Ingested"
+          },
+          {
+            "name": "hours_since_refresh",
+            "expr": "hours_since_refresh",
+            "displayName": "Hours Since Refresh"
+          },
+          {
+            "name": "freshness_status",
+            "expr": "freshness_status",
+            "displayName": "Freshness"
+          },
+          {
+            "name": "row_count",
+            "expr": "row_count",
+            "displayName": "Rows"
+          }
+        ],
+        "measures": [
+          {
+            "name": "stale_tables",
+            "expr": "COUNT(1) FILTER (WHERE hours_since_refresh > 24)",
+            "displayName": "Tables >24h Old"
+          },
+          {
+            "name": "max_hours_since_refresh",
+            "expr": "MAX(hours_since_refresh)",
+            "displayName": "Oldest Refresh (hrs)"
+          },
+          {
+            "name": "total_rows",
+            "expr": "SUM(row_count)",
+            "displayName": "Gold Rows",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "regional_manager",
+      "displayName": "Regional Manager (RLS)",
+      "config": {
+        "version": "1.1",
+        "source": "WITH store AS (\n  SELECT s.store_id, s.store_name, s.store_city, r.sales_region\n  FROM (SELECT * FROM maven_dev.gold.dim_store\n        QUALIFY ROW_NUMBER() OVER (PARTITION BY store_id ORDER BY __START_AT DESC NULLS LAST) = 1) s\n  LEFT JOIN maven_dev.gold.dim_region r ON s.region_id = r.region_id\n), sales AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', transaction_date) AS DATE) AS month,\n         SUM(net_sales_amount) AS net_sales, SUM(gross_profit_amount) AS gross_profit,\n         SUM(quantity) AS units_sold, CAST(0 AS DOUBLE) AS refund_amount, 0L AS units_returned\n  FROM maven_dev.gold.fact_sales GROUP BY 1, 2\n), rets AS (\n  SELECT store_id, CAST(DATE_TRUNC('MONTH', return_date) AS DATE) AS month,\n         CAST(0 AS DOUBLE), CAST(0 AS DOUBLE), 0L, SUM(refund_amount), CAST(SUM(quantity) AS BIGINT)\n  FROM maven_dev.gold.fact_returns GROUP BY 1, 2\n), u AS (SELECT * FROM sales UNION ALL SELECT * FROM rets)\nSELECT st.sales_region, st.store_name, st.store_city, u.*\nFROM u JOIN store st ON u.store_id = st.store_id\nWHERE is_account_group_member('data_admins')\n   OR is_account_group_member('data_engineers')\n   OR is_account_group_member('executives')\n   OR is_account_group_member('data_analysts')\n   OR is_account_group_member(CONCAT('region_mgr_', LOWER(REPLACE(st.sales_region, ' ', '_'))))",
+        "dimensions": [
+          {
+            "name": "sales_region",
+            "expr": "sales_region",
+            "displayName": "Region"
+          },
+          {
+            "name": "store_name",
+            "expr": "store_name",
+            "displayName": "Store"
+          },
+          {
+            "name": "store_city",
+            "expr": "store_city",
+            "displayName": "City"
+          },
+          {
+            "name": "month",
+            "expr": "month",
+            "displayName": "Month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "net_sales",
+            "expr": "SUM(net_sales)",
+            "displayName": "Revenue",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "gross_profit",
+            "expr": "SUM(gross_profit)",
+            "displayName": "Gross Profit",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "refund_amount",
+            "expr": "SUM(refund_amount)",
+            "displayName": "Return Value",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "return_rate",
+            "expr": "SUM(units_returned) / NULLIF(SUM(units_sold), 0)",
+            "displayName": "Return Rate %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "margin_pct",
+            "expr": "SUM(gross_profit) / NULLIF(SUM(net_sales), 0)",
+            "displayName": "Margin %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "store_count",
+            "expr": "COUNT(DISTINCT store_id)",
+            "displayName": "Stores"
+          }
+        ]
+      }
+    },
+    {
+      "name": "returns_by_product",
+      "displayName": "Returns by Product",
+      "config": {
+        "version": "1.1",
+        "source": "WITH s AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS sold_qty\n  FROM maven_dev.gold.fact_sales GROUP BY 1\n), r AS (\n  SELECT CAST(product_id AS BIGINT) AS pid, SUM(quantity) AS returned_qty, SUM(refund_amount) AS refund_amount\n  FROM maven_dev.gold.fact_returns GROUP BY 1\n)\nSELECT p.product_name, p.product_brand,\n       COALESCE(s.sold_qty, 0) AS sold_qty, r.returned_qty, r.refund_amount\nFROM r\nJOIN maven_dev.gold.dim_product p ON r.pid = p.product_id\nLEFT JOIN s ON s.pid = r.pid\n",
+        "dimensions": [
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product"
+          },
+          {
+            "name": "product_brand",
+            "expr": "product_brand",
+            "displayName": "Brand"
+          }
+        ],
+        "measures": [
+          {
+            "name": "return_rate",
+            "expr": "SUM(returned_qty) / NULLIF(SUM(sold_qty), 0)",
+            "displayName": "Return Rate %",
+            "format": {
+              "type": "percentage",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 1.0
+              }
+            }
+          },
+          {
+            "name": "refund_amount",
+            "expr": "SUM(refund_amount)",
+            "displayName": "Return Value",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "max",
+                "places": 1.0
+              },
+              "abbreviation": "compact"
+            }
+          },
+          {
+            "name": "returned_qty",
+            "expr": "SUM(returned_qty)",
+            "displayName": "Units Returned"
+          },
+          {
+            "name": "sold_qty",
+            "expr": "SUM(sold_qty)",
+            "displayName": "Units Sold"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "date_range",
+            "queries": [
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_transaction_date",
+                "query": {
+                  "datasetName": "fact_sales",
+                  "fields": [
+                    {
+                      "name": "transaction_date",
+                      "expression": "`transaction_date`"
+                    },
+                    {
+                      "name": "transaction_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_return_date",
+                "query": {
+                  "datasetName": "fact_returns",
+                  "fields": [
+                    {
+                      "name": "return_date",
+                      "expression": "`return_date`"
+                    },
+                    {
+                      "name": "return_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Date Range (Pages 1-4, 6)"
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "transaction_date",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_transaction_date"
+                  },
+                  {
+                    "fieldName": "return_date",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_return_date"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "region_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1113a7594c78af3c69da_sales_region",
+                "query": {
+                  "datasetName": "dim_region",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10f085546acb277822ed_sales_region",
+                "query": {
+                  "datasetName": "revenue_by_region",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_sales_region",
+                "query": {
+                  "datasetName": "fact_sales",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d110c8bd3b24600b7e903_sales_region",
+                "query": {
+                  "datasetName": "sales_by_store",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1109978662fb0f26274f_sales_region",
+                "query": {
+                  "datasetName": "returns_by_region_month",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd201f7c1a758e6060b9b23d2863_sales_region",
+                "query": {
+                  "datasetName": "regional_manager",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_sales_region",
+                "query": {
+                  "datasetName": "fact_returns",
+                  "fields": [
+                    {
+                      "name": "sales_region",
+                      "expression": "`sales_region`"
+                    },
+                    {
+                      "name": "sales_region_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Region (drill step 1 → Page 2)"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1113a7594c78af3c69da_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10f085546acb277822ed_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d110c8bd3b24600b7e903_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1109978662fb0f26274f_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd201f7c1a758e6060b9b23d2863_sales_region"
+                  },
+                  {
+                    "fieldName": "sales_region",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_sales_region"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "customer_global",
+            "queries": [
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_customer_name",
+                "query": {
+                  "datasetName": "fact_sales",
+                  "fields": [
+                    {
+                      "name": "customer_name",
+                      "expression": "`customer_name`"
+                    },
+                    {
+                      "name": "customer_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d111987afdd81be9b60c5_customer_name",
+                "query": {
+                  "datasetName": "customer_analytics",
+                  "fields": [
+                    {
+                      "name": "customer_name",
+                      "expression": "`customer_name`"
+                    },
+                    {
+                      "name": "customer_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Customer (Page 4 only)"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "customer_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_customer_name"
+                  },
+                  {
+                    "fieldName": "customer_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d111987afdd81be9b60c5_customer_name"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "store_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_store_name",
+                "query": {
+                  "datasetName": "fact_sales",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "store_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd201f7c1a758e6060b9b23d2863_store_name",
+                "query": {
+                  "datasetName": "regional_manager",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "store_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_store_name",
+                "query": {
+                  "datasetName": "fact_returns",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "store_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d110c8bd3b24600b7e903_store_name",
+                "query": {
+                  "datasetName": "sales_by_store",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "store_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Store (drill step 2 → Page 3)"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "store_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d10cbb032b45768c65c75_store_name"
+                  },
+                  {
+                    "fieldName": "store_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd201f7c1a758e6060b9b23d2863_store_name"
+                  },
+                  {
+                    "fieldName": "store_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d1101a145481552191192_store_name"
+                  },
+                  {
+                    "fieldName": "store_name",
+                    "queryName": "dashboards/01f1cd1f1732189aaa69e02e4aa7fdbd/datasets/01f1cd1f173d110c8bd3b24600b7e903_store_name"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 4,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "governance_ops",
+      "displayName": "8. Governance & Data Quality",
+      "layout": [
+        {
+          "widget": {
+            "name": "dq_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_summary",
+                  "fields": [
+                    {
+                      "name": "rule_name",
+                      "expression": "`rule_name`"
+                    },
+                    {
+                      "name": "run_timestamp",
+                      "expression": "`run_timestamp`"
+                    },
+                    {
+                      "name": "measure(avg_failure_percentage)",
+                      "expression": "MEASURE(`avg_failure_percentage`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Data Quality: Failure % Over Time"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "run_timestamp",
+                  "displayName": "run_timestamp",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(avg_failure_percentage)",
+                  "displayName": "failure_percentage",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "rule_name",
+                  "displayName": "rule_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "filterSources": {
+              "mode": "EXCLUDE",
+              "global": {
+                "all": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 8,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "streaming_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "table_name",
+                      "expression": "`table_name`"
+                    },
+                    {
+                      "name": "throughput_total_rows",
+                      "expression": "`throughput_total_rows`"
+                    },
+                    {
+                      "name": "quarantined_rows",
+                      "expression": "`quarantined_rows`"
+                    },
+                    {
+                      "name": "latest_event_time",
+                      "expression": "`latest_event_time`"
+                    },
+                    {
+                      "name": "avg_ingest_lag_seconds",
+                      "expression": "`avg_ingest_lag_seconds`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Streaming Pipeline Throughput Status"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "table_name"
+                  },
+                  {
+                    "fieldName": "throughput_total_rows"
+                  },
+                  {
+                    "fieldName": "quarantined_rows"
+                  },
+                  {
+                    "fieldName": "latest_event_time"
+                  },
+                  {
+                    "fieldName": "avg_ingest_lag_seconds"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "filterSources": {
+              "mode": "EXCLUDE",
+              "global": {
+                "all": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_quality_score",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_summary",
+                  "fields": [
+                    {
+                      "name": "measure(quality_score)",
+                      "expression": "MEASURE(`quality_score`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Quality Score"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(quality_score)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_failed_checks",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_summary",
+                  "fields": [
+                    {
+                      "name": "measure(failed_checks)",
+                      "expression": "MEASURE(`failed_checks`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Failed DQ Checks"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(failed_checks)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_quarantined",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "measure(total_quarantined)",
+                      "expression": "MEASURE(`total_quarantined`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Quarantined Records"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(total_quarantined)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "rule_fail_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_summary",
+                  "fields": [
+                    {
+                      "name": "measure(records_failed)",
+                      "expression": "MEASURE(`records_failed`)"
+                    },
+                    {
+                      "name": "rule_name",
+                      "expression": "`rule_name`"
+                    }
+                  ],
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "MEASURE(`records_failed`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Records Failed by Rule"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "measure(records_failed)",
+                  "displayName": "Records Failed",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "rule_name",
+                  "displayName": "Rule",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "measure(records_failed)"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 4,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_lag",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "measure(max_lag_seconds)",
+                      "expression": "MEASURE(`max_lag_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Max Ingestion Lag (sec)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(max_lag_seconds)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "recon_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "reconciliation",
+                  "fields": [
+                    {
+                      "name": "fact_name",
+                      "expression": "`fact_name`"
+                    },
+                    {
+                      "name": "silver_row_count",
+                      "expression": "`silver_row_count`"
+                    },
+                    {
+                      "name": "gold_row_count",
+                      "expression": "`gold_row_count`"
+                    },
+                    {
+                      "name": "counts_match",
+                      "expression": "`counts_match`"
+                    },
+                    {
+                      "name": "run_timestamp",
+                      "expression": "`run_timestamp`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Audit: Silver vs Gold Row Counts (lineage check)"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "fact_name"
+                  },
+                  {
+                    "fieldName": "silver_row_count"
+                  },
+                  {
+                    "fieldName": "gold_row_count"
+                  },
+                  {
+                    "fieldName": "counts_match"
+                  },
+                  {
+                    "fieldName": "run_timestamp"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "filterSources": {
+              "mode": "EXCLUDE",
+              "global": {
+                "all": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 12,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "cost_ops",
+      "displayName": "9. Cost & Operations",
+      "layout": [
+        {
+          "widget": {
+            "name": "ops_note",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Cost / Operations\n",
+                "Pipeline health from the Silver SDP event log and streaming metrics. DBU cost and job-run metrics require access to `system.billing.usage` and `system.lakeflow` tables (currently not granted to this user); once granted, cost widgets can be added here."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_updates",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "measure(pipeline_updates)",
+                      "expression": "MEASURE(`pipeline_updates`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pipeline Updates"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(pipeline_updates)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_failed",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "measure(failed_updates)",
+                      "expression": "MEASURE(`failed_updates`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Failed Updates"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(failed_updates)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_errors",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "measure(error_count)",
+                      "expression": "MEASURE(`error_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Error Events"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(error_count)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_throughput",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "measure(total_throughput)",
+                      "expression": "MEASURE(`total_throughput`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Rows Processed"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(total_throughput)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_lag",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "measure(max_lag_seconds)",
+                      "expression": "MEASURE(`max_lag_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Max Ingest Lag (s)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(max_lag_seconds)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ops_kpi_latest",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "measure(latest_event)",
+                      "expression": "MEASURE(`latest_event`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Last Pipeline Event",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(latest_event)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "events_by_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "level",
+                      "expression": "`level`"
+                    },
+                    {
+                      "name": "event_date",
+                      "expression": "`event_date`"
+                    },
+                    {
+                      "name": "measure(event_count)",
+                      "expression": "MEASURE(`event_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pipeline Events by Day & Level"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "event_date",
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(event_count)",
+                  "displayName": "Events",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "level",
+                  "displayName": "Level",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 8,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "events_by_type",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "measure(event_count)",
+                      "expression": "MEASURE(`event_count`)"
+                    },
+                    {
+                      "name": "event_type",
+                      "expression": "`event_type`"
+                    }
+                  ],
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "MEASURE(`event_count`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Events by Type"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "measure(event_count)",
+                  "displayName": "Events",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "event_type",
+                  "displayName": "Event Type",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 10
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "measure(event_count)"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 4,
+            "width": 4,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "throughput_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "table_name",
+                      "expression": "`table_name`"
+                    },
+                    {
+                      "name": "measure(total_throughput)",
+                      "expression": "MEASURE(`total_throughput`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Throughput by Streaming Table"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "table_name",
+                  "displayName": "Table",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(total_throughput)",
+                  "displayName": "Rows Processed",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "lag_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "streaming_health",
+                  "fields": [
+                    {
+                      "name": "table_name",
+                      "expression": "`table_name`"
+                    },
+                    {
+                      "name": "measure(max_lag_seconds)",
+                      "expression": "MEASURE(`max_lag_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Ingest Lag by Streaming Table"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "table_name",
+                  "displayName": "Table",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(max_lag_seconds)",
+                  "displayName": "Lag (s)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "pipeline_events_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "pipeline_ops",
+                  "fields": [
+                    {
+                      "name": "event_time",
+                      "expression": "`event_time`"
+                    },
+                    {
+                      "name": "level",
+                      "expression": "`level`"
+                    },
+                    {
+                      "name": "event_type",
+                      "expression": "`event_type`"
+                    },
+                    {
+                      "name": "pipeline_name",
+                      "expression": "`pipeline_name`"
+                    },
+                    {
+                      "name": "flow_name",
+                      "expression": "`flow_name`"
+                    },
+                    {
+                      "name": "message",
+                      "expression": "`message`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Pipeline Event Log (drill detail)"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "event_time"
+                  },
+                  {
+                    "fieldName": "level"
+                  },
+                  {
+                    "fieldName": "event_type"
+                  },
+                  {
+                    "fieldName": "pipeline_name"
+                  },
+                  {
+                    "fieldName": "flow_name"
+                  },
+                  {
+                    "fieldName": "message"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "freshness_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "data_freshness",
+                  "fields": [
+                    {
+                      "name": "table_name",
+                      "expression": "`table_name`"
+                    },
+                    {
+                      "name": "last_ingested_at",
+                      "expression": "`last_ingested_at`"
+                    },
+                    {
+                      "name": "hours_since_refresh",
+                      "expression": "`hours_since_refresh`"
+                    },
+                    {
+                      "name": "freshness_status",
+                      "expression": "`freshness_status`"
+                    },
+                    {
+                      "name": "row_count",
+                      "expression": "`row_count`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Data Freshness (Gold tables)"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "table_name"
+                  },
+                  {
+                    "fieldName": "last_ingested_at"
+                  },
+                  {
+                    "fieldName": "hours_since_refresh"
+                  },
+                  {
+                    "fieldName": "freshness_status"
+                  },
+                  {
+                    "fieldName": "row_count"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "filterSources": {
+              "mode": "EXCLUDE",
+              "global": {
+                "all": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 20,
+            "width": 12,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {
+        "light": "#EBEBEB",
+        "dark": "#0D1117"
+      },
+      "widgetBackgroundColor": {
+        "light": "#FCFCFD",
+        "dark": "#161B22"
+      },
+      "widgetBorderColor": {
+        "light": "#FCFCFD",
+        "dark": "#161B22"
+      },
+      "fontColor": {
+        "light": "#E8ECF0",
+        "dark": "#E8ECF0"
+      },
+      "selectionColor": {
+        "light": "#2375A8",
+        "dark": "#15AFDD"
+      },
+      "visualizationColors": [
+        "#15AFDD",
+        "#2375A8",
+        "#52A870",
+        "#C85070",
+        "#C89930",
+        "#7B68EE",
+        "#E67E22",
+        "#1ABC9C"
+      ],
+      "widgetHeaderAlignment": "LEFT",
+      "fontFamily": "Space Grotesk",
+      "widgetPadding": 12,
+      "widgetMargin": 8,
+      "widgetCornerRadius": 8,
+      "widgetShadow": 0,
+      "continuousGradient": {
+        "lightMode": {
+          "fromCategoricalIndex": 0
+        },
+        "darkMode": {
+          "fromCategoricalIndex": 0
+        }
+      },
+      "fontSettings": {
+        "base": {
+          "fontFamily": "DM Sans",
+          "fontColor": {
+            "light": "#1B2631",
+            "dark": "#EBEBEB"
+          },
+          "fontSize": 14,
+          "fontWeight": 400
+        },
+        "widgetTitle": {
+          "fontSize": 16,
+          "fontWeight": 500
+        },
+        "widgetDescription": {
+          "fontSize": 14,
+          "fontWeight": 400
+        },
+        "fieldTitle": {
+          "textCase": "TEXT_CASE_UPPERCASE",
+          "fontColor": {
+            "light": "#D1D4D8",
+            "dark": "#D1D4D8"
+          },
+          "fontSize": 13,
+          "fontWeight": 400
+        },
+        "fieldValue": {
+          "fontColor": {
+            "light": "#D1D4D8",
+            "dark": "#D1D4D8"
+          },
+          "fontSize": 13,
+          "fontWeight": 400
+        }
+      },
+      "gridLineColor": {
+        "light": "#383E42",
+        "dark": "#383E42"
+      },
+      "axisLineColor": {
+        "light": "#515960",
+        "dark": "#515960"
+      }
+    },
+    "applyModeEnabled": false
+  }
+}
