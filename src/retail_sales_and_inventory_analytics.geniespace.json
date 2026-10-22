@@ -263,7 +263,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.customer_analytics"
+        "identifier": "maven_dev.gold.customer_analytics"
       },
       {
         "column_configs": [
@@ -320,7 +320,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.dim_product"
+        "identifier": "maven_dev.gold.dim_product"
       },
       {
         "column_configs": [
@@ -376,7 +376,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.dim_promotion"
+        "identifier": "maven_dev.gold.dim_promotion"
       },
       {
         "column_configs": [
@@ -414,7 +414,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.dim_region"
+        "identifier": "maven_dev.gold.dim_region"
       },
       {
         "column_configs": [
@@ -507,7 +507,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.dim_store"
+        "identifier": "maven_dev.gold.dim_store"
       },
       {
         "column_configs": [
@@ -561,7 +561,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.fact_inventory_events"
+        "identifier": "maven_dev.gold.fact_inventory_events"
       },
       {
         "column_configs": [
@@ -623,7 +623,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.fact_online_orders"
+        "identifier": "maven_dev.gold.fact_online_orders"
       },
       {
         "column_configs": [
@@ -687,7 +687,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.fact_returns"
+        "identifier": "maven_dev.gold.fact_returns"
       },
       {
         "column_configs": [
@@ -794,7 +794,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.fact_sales"
+        "identifier": "maven_dev.gold.fact_sales"
       },
       {
         "column_configs": [
@@ -816,7 +816,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.profit_by_brand"
+        "identifier": "maven_dev.gold.profit_by_brand"
       },
       {
         "column_configs": [
@@ -843,7 +843,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.returns_analysis"
+        "identifier": "maven_dev.gold.returns_analysis"
       },
       {
         "column_configs": [
@@ -865,7 +865,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.returns_pct_by_month"
+        "identifier": "maven_dev.gold.returns_pct_by_month"
       },
       {
         "column_configs": [
@@ -892,7 +892,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.revenue_by_promotion"
+        "identifier": "maven_dev.gold.revenue_by_promotion"
       },
       {
         "column_configs": [
@@ -910,7 +910,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.sales_by_customer_tier"
+        "identifier": "maven_dev.gold.sales_by_customer_tier"
       },
       {
         "column_configs": [
@@ -942,7 +942,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.sales_by_store"
+        "identifier": "maven_dev.gold.sales_by_store"
       },
       {
         "column_configs": [
@@ -964,7 +964,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.sales_growth_by_month"
+        "identifier": "maven_dev.gold.sales_growth_by_month"
       },
       {
         "column_configs": [
@@ -995,7 +995,7 @@
             "enable_format_assistance": true
           }
         ],
-        "identifier": "maven_test.gold.top_products_by_revenue"
+        "identifier": "maven_dev.gold.top_products_by_revenue"
       }
     ]
   },
@@ -1008,7 +1008,7 @@
         ],
         "sql": [
           "SELECT sales_region, total_net_sales, total_gross_profit\r\n",
-          "FROM maven_test.gold.revenue_by_region\r\n",
+          "FROM maven_dev.gold.revenue_by_region\r\n",
           "ORDER BY total_net_sales DESC;"
         ]
       },
@@ -1019,7 +1019,7 @@
         ],
         "sql": [
           "SELECT product_name, product_brand, total_net_sales, total_gross_profit\r\n",
-          "FROM maven_test.gold.top_products_by_revenue\r\n",
+          "FROM maven_dev.gold.top_products_by_revenue\r\n",
           "ORDER BY total_net_sales DESC LIMIT 10;"
         ]
       },
@@ -1030,7 +1030,7 @@
         ],
         "sql": [
           "SELECT sales_month, return_rate_pct\r\n",
-          "FROM maven_test.gold.returns_pct_by_month\r\n",
+          "FROM maven_dev.gold.returns_pct_by_month\r\n",
           "ORDER BY sales_month;"
         ]
       },
@@ -1041,7 +1041,7 @@
         ],
         "sql": [
           "SELECT member_card, total_net_sales\r\n",
-          "FROM maven_test.gold.sales_by_customer_tier\r\n",
+          "FROM maven_dev.gold.sales_by_customer_tier\r\n",
           "ORDER BY total_net_sales DESC;"
         ]
       },
@@ -1052,7 +1052,7 @@
         ],
         "sql": [
           "SELECT store_name, sales_region, store_country, total_net_sales, margin_pct\r\n",
-          "FROM maven_test.gold.sales_by_store\r\n",
+          "FROM maven_dev.gold.sales_by_store\r\n",
           "ORDER BY total_net_sales DESC;"
         ]
       }
