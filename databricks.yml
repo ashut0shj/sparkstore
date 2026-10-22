@@ -2,7 +2,11 @@ bundle:
   name: maven_market_capstone
 
 include:
-  - resources/*.yml
+  - resources/bronze_job.yml
+  - resources/dashboard.yml
+  - resources/pipeline.yml
+  # - resources/retail_sales_and_inventory_analytics.genie_space.yml
+  - resources/silver_gold_job.yml
 
 variables:
   catalog:
