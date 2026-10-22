@@ -21,6 +21,35 @@ CI/CD that deploys (never runs) on every push and PR into `main`.
 └── .github/workflows/deploy.yml
 ```
 
+## CI/CD authentication setup (required before CI/CD will work at all)
+
+GitHub Actions authenticates as a Databricks **service principal**, not a
+personal login. Set this up once:
+
+1. Databricks workspace → **Settings → Identity and access → Service
+   principals → Add service principal**. Name it e.g. `maven-capstone-ci`.
+2. Open it → **Secrets** tab → **Generate secret**. Copy the **Client ID**
+   and **Secret** immediately — the secret is shown once only.
+3. Grant it access: **Can Manage** on `maven_silver_pipeline`, on
+   `Bronze_Ingestion`, and on `Silver_and_Gold_Pipeline` (or make it a
+   workspace admin for now while you're still building, tighten later),
+   plus Unity Catalog grants on `maven_dev` matching `data_engineers` —
+   it becomes the identity your scheduled runs actually execute as.
+4. GitHub repo → **Settings → Secrets and variables → Actions → New
+   repository secret**, add all three:
+   - `DATABRICKS_HOST` = `https://adb-7405616945565645.5.azuredatabricks.net`
+   - `DATABRICKS_CLIENT_ID` = the Client ID from step 2
+   - `DATABRICKS_CLIENT_SECRET` = the Secret from step 2
+5. Put that same Client ID into `databricks.yml`'s `prod` target under
+   `run_as.service_principal_name` (replace the
+   `<ci-service-principal-client-id>` placeholder). It's not sensitive —
+   only the secret is — so it's fine committed in plain text.
+
+If you see `cannot configure default credentials` during
+`bundle validate`/`bundle deploy` in the Action logs, it means one of the
+three secrets above is missing or empty — GitHub prints a real secret as
+`***`; a blank value after the colon in the log means it was never added.
+
 ## REQUIRED one-time step before your first push
 
 You already have a live pipeline (`b9a24975-2af3-480c-864d-dfb2aa523fd4`) and
