@@ -12,7 +12,7 @@ resources:
       # Shared-mode usable, not Single User.
       tasks:
         - task_key: bronze_csv
-          existing_cluster_id: "1019-171615-hy87js82"
+          existing_cluster_id: "1009-113639-lkgoryqq"
           notebook_task:
             notebook_path: ../src/bronze/01_bronze_ingestion.py
             base_parameters:
@@ -22,7 +22,7 @@ resources:
           min_retry_interval_millis: 60000
 
         - task_key: bronze_mongo
-          existing_cluster_id: "1019-171615-hy87js82"
+          existing_cluster_id: "1009-113639-lkgoryqq"
           notebook_task:
             notebook_path: ../src/bronze/02_bronze_mongo.py
             base_parameters:

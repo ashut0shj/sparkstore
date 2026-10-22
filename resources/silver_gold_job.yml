@@ -18,7 +18,7 @@ resources:
         - task_key: dq_summary
           depends_on:
             - task_key: maven_silver_gold
-          existing_cluster_id: "1019-171615-hy87js82"
+          existing_cluster_id: "1009-113639-lkgoryqq"
           notebook_task:
             notebook_path: ../src/silver/dq_summary_report.py
             base_parameters:
