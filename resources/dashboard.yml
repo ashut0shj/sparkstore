@@ -4,3 +4,13 @@ resources:
       display_name: "Maven Market – Executive Drill-Down & Operations Dashboard"
       file_path: ../dashboards/Maven Market – Executive Drill-Down & Operations Dashboard.lvdash.json
       warehouse_id: ${var.sql_warehouse_id}
+
+    executive_operations_dashboard_ops:
+      display_name: "Maven Market – Executive Drill-Down & Operations Dashboard (OPS)"
+      file_path: ../dashboards/Maven Market – Executive Drill-Down & Operations Dashboard (OPS).lvdash.json
+      warehouse_id: ${var.sql_warehouse_id}
+
+    executive_operations_dashboard_sales:
+      display_name: "Maven Market – Executive Drill-Down & Operations Dashboard (SALES)"
+      file_path: ../dashboards/Maven Market – Executive Drill-Down & Operations Dashboard(SALES).lvdash.json
+      warehouse_id: ${var.sql_warehouse_id}
