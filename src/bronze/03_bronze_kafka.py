@@ -69,7 +69,7 @@ def ingest_kafka_topic(topic_name, table_name):
         bronze_stream.writeStream
         .format("delta")
         .option("checkpointLocation", checkpoint_path)
-        .trigger(availableNow=True)
+        .trigger(processingTime="5 seconds")
         .toTable(target_table)
     )
 
